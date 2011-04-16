@@ -96,14 +96,20 @@ pfrules_read(void)
 		rule = pr.rule;
 #ifndef TEST
 		snprintf(rule_number, sizeof(rule_number), "%i", rule.nr);
-		submit_counter("scrub_states_current", rule_number, rule.states_cur);
-		submit_counter("scrub_states_total", rule_number, rule.states_tot);
-		submit_counter("scrub_evaluations", rule_number, (unsigned long long)rule.evaluations);
-		submit_counter("scrub_bytes", rule_number, (unsigned long long)(rule.packets[0] + rule.packets[1]));
+		submit_counter("scrub_states_current", rule_number,
+		    rule.states_cur);
+		submit_counter("scrub_states_total", rule_number,
+		    rule.states_tot);
+		submit_counter("scrub_evaluations", rule_number,
+		    (unsigned long long)rule.evaluations);
+		submit_counter("scrub_bytes", rule_number,
+		    (unsigned long long)(rule.packets[0] + rule.packets[1]));
 #else
 		/*
 		 * XXX: get rule name
 		 *      print_rule() in pfctl_parser.c
+		 *      User rule.nr as identifier is a bad idea if user
+		 *      changes the ruleset. Use the rule string is more specific.
 		 */
 		printf("Rule-Number: %i\n", rule.nr);
 		printf("States cur: %-6u\n", rule.states_cur);
@@ -130,10 +136,14 @@ pfrules_read(void)
 		rule = pr.rule;
 #ifndef TEST
 		snprintf(rule_number, sizeof(rule_number), "%i", rule.nr);
-		submit_counter("rule_states_current", rule_number, rule.states_cur);
-		submit_counter("rule_states_total", rule_number, rule.states_tot);
-		submit_counter("rule_evaluations", rule_number, (unsigned long long)rule.evaluations);
-		submit_counter("rule_bytes", rule_number, (unsigned long long)(rule.packets[0] + rule.packets[1]));
+		submit_counter("rule_states_current", rule_number,
+		    rule.states_cur);
+		submit_counter("rule_states_total", rule_number,
+		    rule.states_tot);
+		submit_counter("rule_evaluations", rule_number,
+		    (unsigned long long)rule.evaluations);
+		submit_counter("rule_bytes", rule_number,
+		    (unsigned long long)(rule.packets[0] + rule.packets[1]));
 #else
 		printf("Rule-Number: %i\n", rule.nr);
 		printf("States cur: %-6u\n", rule.states_cur);
@@ -145,6 +155,7 @@ pfrules_read(void)
 		printf("\n");
 #endif
 	}
+	close(dev);
 	return (0);
 }
 
@@ -164,4 +175,3 @@ void module_register(void) {
 	plugin_register_read("pfrules", pfrules_read);
 }
 #endif
-
