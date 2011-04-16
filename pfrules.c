@@ -18,7 +18,9 @@
 
 static int	pfrules_init(void);
 static int	pfrules_read(void);
+#ifndef TEST
 static void	submit_counter(const char *, const char *, counter_t);
+#endif
 
 int
 pfrules_init(void)
@@ -39,10 +41,10 @@ pfrules_init(void)
 	return (0);
 }
 
+#ifndef TEST
 void
 submit_counter(const char *rule_number, const char *inst, counter_t val)
 {
-#ifndef TEST
 	value_t		values[1];
 	value_list_t	vl = VALUE_LIST_INIT;
 
@@ -55,10 +57,8 @@ submit_counter(const char *rule_number, const char *inst, counter_t val)
 	sstrncpy (vl.type, rule_number, sizeof(vl.type));
 	sstrncpy (vl.type_instance, inst, sizeof(vl.type_instance));
 	plugin_dispatch_values(&vl);
-#else
-	printf("%s.%s: %lld\n", type, inst, val);
-#endif
 }
+#endif
 
 
 int
@@ -68,7 +68,9 @@ pfrules_read(void)
 	struct pf_rule		 rule;
 	u_int32_t		 nr, mnr;
 	char			*path;
+#ifndef TEST
 	char			 rule_number[10];
+#endif
 
 	if ((path = calloc(1, MAXPATHLEN)) == NULL)
 		return (-1);
