@@ -29,14 +29,14 @@ pfrules_init(void)
 {
 	struct pf_status	status;
 
-	if ((pfdev = open(PF_SOCKET, O_RDWR)) == -1) {
+	if ((dev = open(PF_SOCKET, O_RDWR)) == -1) {
 		return (-1);
 	}
-	if (ioctl(pfdev, DIOCGETSTATUS, &status) == -1) {
+	if (ioctl(dev, DIOCGETSTATUS, &status) == -1) {
 		return (-1);
 	}
 
-	close(pfdev);
+	close(dev);
 	if (!status.running)
 		return (-1);
 
@@ -74,6 +74,11 @@ pfrules_read(void)
 	FILE			 *sfp = NULL;
 	int			 fd;
 	char			 rulestring[256];
+	static int		nattype[3] = { PF_NAT, PF_RDR, PF_BINAT };
+	int			i;
+	char			anchorname[MAXPATHLEN];
+
+	memset(anchorname, 0, sizeof(anchorname));
 
 	if ((path = calloc(1, MAXPATHLEN)) == NULL)
 		return (-1);
@@ -81,19 +86,21 @@ pfrules_read(void)
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, path, sizeof(pr.anchor));
 
-	if ((pfdev = open(PF_SOCKET, O_RDWR)) == -1) {
+	if ((dev = open(PF_SOCKET, O_RDWR)) == -1) {
 		return (-1);
 	}
 
 	pr.rule.action = PF_SCRUB;
-	if (ioctl(pfdev, DIOCGETRULES, &pr)) {
+	if (ioctl(dev, DIOCGETRULES, &pr)) {
+		warn("DIOCGETRULES");
 		return (-1);
 	}
 
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
-		if (ioctl(pfdev, DIOCGETRULE, &pr)) {
+		if (ioctl(dev, DIOCGETRULE, &pr)) {
+			warn("DIOCGETRULE");
 			return (-1);
 		}
 		rule = pr.rule;
@@ -154,14 +161,16 @@ pfrules_read(void)
 	}
 
 	pr.rule.action = PF_PASS;
-	if (ioctl(pfdev, DIOCGETRULES, &pr)) {
+	if (ioctl(dev, DIOCGETRULES, &pr)) {
+		warn("DIOCGETRULES");
 		return (-1);
 	}
 
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
-		if (ioctl(pfdev, DIOCGETRULE, &pr)) {
+		if (ioctl(dev, DIOCGETRULE, &pr)) {
+			warn("DIOCGETRULE");
 			return (-1);
 		}
 		rule = pr.rule;
@@ -222,7 +231,89 @@ pfrules_read(void)
 		printf("\n");
 #endif
 	}
-	close(pfdev);
+
+	for (i = 0; i < 3; i++) {
+		pr.rule.action = nattype[i];
+		if (ioctl(dev, DIOCGETRULES, &pr)) {
+			warn("DIOCGETRULES");
+			return (-1);
+		}
+		mnr = pr.nr;
+		for (nr = 0; nr < mnr; ++nr) {
+			pr.nr = nr;
+			if (ioctl(dev, DIOCGETRULE, &pr)) {
+				warn("DIOCGETRULE");
+				return (-1);
+			}
+			if (pfctl_get_pool(dev, &pr.rule.rpool, nr,
+			    pr.ticket, nattype[i], anchorname) != 0)
+				return (-1);
+
+			rule = pr.rule;
+
+			strlcpy(sfn, "/tmp/pfutils.XXXXXXXXXX", sizeof(sfn));
+			if ((fd = mkstemp(sfn)) == -1 ||
+			    (sfp = fdopen(fd, "w+")) == NULL) {
+				if (fd != -1) {
+					unlink(sfn);
+					close(fd);
+				}
+			}
+
+			freopen(sfn, "w", stdout);
+			print_rule(&pr.rule, pr.anchor_call, 0);
+			freopen("/dev/tty", "w", stdout);
+			fgets(rulestring, sizeof(rulestring), sfp);
+			fclose(sfp);
+			remove(sfn);
+
+			char *p1 = rulestring;
+			char *p2 = rulestring;
+			while(*p1 != 0) {
+				if(*p1 == '!') {
+					*p2++ = *p1++;
+					++p1;
+				} else if(*p1 == '=') {
+					*--p2 = "";
+					*p2++ = *p1++;
+					++p1;
+				} else if(isspace(*p1)) {
+					*p2++ = '-';
+					++p1;
+				} else if((*p1 == '(') || (*p1 == ')') || (*p1 == '>')) {
+					++p1;
+				} else {
+					*p2++ = *p1++;
+				}
+			}
+			*p2 = 0;
+
+			pfctl_clear_pool(&pr.rule.rpool);
+
+#ifndef TEST
+			submit_counter("states_cur", rulestring,
+			    rule.states_cur);
+			submit_counter("states_tot", rulestring,
+			    rule.states_tot);
+			submit_counter("evaluations", rulestring,
+			    (unsigned long long)rule.evaluations);
+			submit_counter("bytes", rulestring,
+			    (unsigned long long)(rule.packets[0] + rule.packets[1]));
+#else
+			printf("Rule-Number: %i\n", rule.nr);
+			printf("Rule: %s\n", rulestring);
+			printf("States cur: %-6u\n", rule.states_cur);
+			printf("States tot: %-6u\n", rule.states_tot);
+			printf("Evaluations: %-8llu\n",
+			    (unsigned long long)rule.evaluations);
+			printf("Bytes: %-10llu\n",
+			    (unsigned long long)(rule.packets[0] + rule.packets[1]));
+			printf("\n");
+#endif
+		}
+	}
+
+	close(dev);
 	return (0);
 }
 
