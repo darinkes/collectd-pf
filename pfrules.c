@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <ctype.h>
 #include "pfcommon.h"
 #include "pfutils.h"
 
@@ -69,9 +70,10 @@ pfrules_read(void)
 	struct pf_rule		 rule;
 	u_int32_t		 nr, mnr;
 	char			*path;
-#ifndef TEST
-	char			 rule_number[10];
-#endif
+	char			 sfn[23];
+	FILE			 *sfp = NULL;
+	int			 fd;
+	char			 rulestring[256];
 
 	if ((path = calloc(1, MAXPATHLEN)) == NULL)
 		return (-1);
@@ -95,25 +97,52 @@ pfrules_read(void)
 			return (-1);
 		}
 		rule = pr.rule;
+		strlcpy(sfn, "/tmp/pfutils.XXXXXXXXXX", sizeof(sfn));
+		if ((fd = mkstemp(sfn)) == -1 ||
+		    (sfp = fdopen(fd, "w+")) == NULL) {
+			if (fd != -1) {
+				unlink(sfn);
+				close(fd);
+			}
+		}
+		freopen(sfn, "w", stdout);
+		print_rule(&pr.rule, pr.anchor_call, 0);
+		freopen("/dev/tty", "w", stdout);
+		fgets(rulestring, sizeof(rulestring), sfp);
+		fclose(sfp);
+		remove(sfn);
+
+		char *p1 = rulestring;
+		char *p2 = rulestring;
+		while(*p1 != 0) {
+			if(*p1 == '!') {
+				*p2++ = *p1++;
+				++p1;
+			} else if(*p1 == '=') {
+				*--p2 = "";
+				*p2++ = *p1++;
+				++p1;
+			} else if(isspace(*p1)) {
+				*p2++ = '-';
+				++p1;
+			} else {
+				*p2++ = *p1++;
+			}
+		}
+		*p2 = 0;
+
 #ifndef TEST
-		snprintf(rule_number, sizeof(rule_number), "%i", rule.nr);
-		/*
-		 * XXX:
-		 * get rule name, substitute spaces with "_"
-		 */
-		submit_counter("scrub_states_current", rule_number,
+		submit_counter("states_cur", rulestring,
 		    rule.states_cur);
-		submit_counter("scrub_states_total", rule_number,
+		submit_counter("states_tot", rulestring,
 		    rule.states_tot);
-		submit_counter("scrub_evaluations", rule_number,
+		submit_counter("evaluations", rulestring,
 		    (unsigned long long)rule.evaluations);
-		submit_counter("scrub_bytes", rule_number,
+		submit_counter("bytes", rulestring,
 		    (unsigned long long)(rule.packets[0] + rule.packets[1]));
 #else
 		printf("Rule-Number: %i\n", rule.nr);
-		printf("Rule: ");
-		print_rule(&pr.rule, pr.anchor_call, 0);
-		printf("\n");
+		printf("Rule: %s\n", rulestring);
 		printf("States cur: %-6u\n", rule.states_cur);
 		printf("States tot: %-6u\n", rule.states_tot);
 		printf("Evaluations: %-8llu\n",
@@ -136,25 +165,54 @@ pfrules_read(void)
 			return (-1);
 		}
 		rule = pr.rule;
+
+		strlcpy(sfn, "/tmp/pfutils.XXXXXXXXXX", sizeof(sfn));
+		if ((fd = mkstemp(sfn)) == -1 ||
+		    (sfp = fdopen(fd, "w+")) == NULL) {
+			if (fd != -1) {
+				unlink(sfn);
+				close(fd);
+			}
+		}
+
+		freopen(sfn, "w", stdout);
+		print_rule(&pr.rule, pr.anchor_call, 0);
+		freopen("/dev/tty", "w", stdout);
+		fgets(rulestring, sizeof(rulestring), sfp);
+		fclose(sfp);
+		remove(sfn);
+
+		char *p1 = rulestring;
+		char *p2 = rulestring;
+		while(*p1 != 0) {
+			if(*p1 == '!') {
+				*p2++ = *p1++;
+				++p1;
+			} else if(*p1 == '=') {
+				*--p2 = "";
+				*p2++ = *p1++;
+				++p1;
+			} else if(isspace(*p1)) {
+				*p2++ = '-';
+				++p1;
+			} else {
+				*p2++ = *p1++;
+			}
+		}
+		*p2 = 0;
+
 #ifndef TEST
-		snprintf(rule_number, sizeof(rule_number), "%i", rule.nr);
-		/*
-		 * XXX:
-		 * get rule name, substitute spaces with "_"
-		 */
-		submit_counter("rule_states_current", rule_number,
+		submit_counter("states_cur", rulestring,
 		    rule.states_cur);
-		submit_counter("rule_states_total", rule_number,
+		submit_counter("states_tot", rulestring,
 		    rule.states_tot);
-		submit_counter("rule_evaluations", rule_number,
+		submit_counter("evaluations", rulestring,
 		    (unsigned long long)rule.evaluations);
-		submit_counter("rule_bytes", rule_number,
+		submit_counter("bytes", rulestring,
 		    (unsigned long long)(rule.packets[0] + rule.packets[1]));
 #else
 		printf("Rule-Number: %i\n", rule.nr);
-		printf("Rule: ");
-		print_rule(&pr.rule, pr.anchor_call, 0);
-		printf("\n");
+		printf("Rule: %s\n", rulestring);
 		printf("States cur: %-6u\n", rule.states_cur);
 		printf("States tot: %-6u\n", rule.states_tot);
 		printf("Evaluations: %-8llu\n",

@@ -15,7 +15,9 @@ pf.so: pf.c
 	${CC} -shared ${COPTS} -o pf.so pf.c
 
 pfrules.so: pfutils.h pfrules.c
-	${CC} -shared ${COPTS} -o pfrules.so pfrules.c
+	${CC} ${COPTS} -c pfrules.c
+	${CC} ${COPTS} -c pfutils${VERSION}.c
+	${CC} -shared ${COPTS} -o pfrules.so pfrules.o pfutils${VERSION}.o
 
 pfcmd: pf.c
 	${CC} -DTEST ${COPTS} -o pfcmd pf.c
