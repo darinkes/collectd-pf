@@ -18,5 +18,7 @@ pfrules.so: pfrules.c
 pfcmd: pf.c
 	${CC} -DTEST ${COPTS} -o pfcmd pf.c
 
-pfrulescmd: pfrules.c
-	${CC} -DTEST ${COPTS} -o pfrulescmd pfrules.c
+pfrulescmd: pfrules.c pfutils.c
+	${CC} -DTEST ${COPTS} -c pfrules.c
+	${CC} -DTEST ${COPTS} -c pfutils.c
+	${CC} -o pfrulescmd pfrules.o pfutils.o

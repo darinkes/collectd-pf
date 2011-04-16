@@ -15,6 +15,7 @@
  */
 
 #include "pfcommon.h"
+#include "pfutils.h"
 
 static int	pfrules_init(void);
 static int	pfrules_read(void);
@@ -27,14 +28,14 @@ pfrules_init(void)
 {
 	struct pf_status	status;
 
-	if ((dev = open(PF_SOCKET, O_RDWR)) == -1) {
+	if ((pfdev = open(PF_SOCKET, O_RDWR)) == -1) {
 		return (-1);
 	}
-	if (ioctl(dev, DIOCGETSTATUS, &status) == -1) {
+	if (ioctl(pfdev, DIOCGETSTATUS, &status) == -1) {
 		return (-1);
 	}
 
-	close(dev);
+	close(pfdev);
 	if (!status.running)
 		return (-1);
 
@@ -78,24 +79,28 @@ pfrules_read(void)
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, path, sizeof(pr.anchor));
 
-	if ((dev = open(PF_SOCKET, O_RDWR)) == -1) {
+	if ((pfdev = open(PF_SOCKET, O_RDWR)) == -1) {
 		return (-1);
 	}
 
 	pr.rule.action = PF_SCRUB;
-	if (ioctl(dev, DIOCGETRULES, &pr)) {
+	if (ioctl(pfdev, DIOCGETRULES, &pr)) {
 		return (-1);
 	}
 
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
-		if (ioctl(dev, DIOCGETRULE, &pr)) {
+		if (ioctl(pfdev, DIOCGETRULE, &pr)) {
 			return (-1);
 		}
 		rule = pr.rule;
 #ifndef TEST
 		snprintf(rule_number, sizeof(rule_number), "%i", rule.nr);
+		/*
+		 * XXX:
+		 * get rule name, substitute spaces with "_"
+		 */
 		submit_counter("scrub_states_current", rule_number,
 		    rule.states_cur);
 		submit_counter("scrub_states_total", rule_number,
@@ -105,13 +110,10 @@ pfrules_read(void)
 		submit_counter("scrub_bytes", rule_number,
 		    (unsigned long long)(rule.packets[0] + rule.packets[1]));
 #else
-		/*
-		 * XXX: get rule name
-		 *      print_rule() in pfctl_parser.c
-		 *      User rule.nr as identifier is a bad idea if user
-		 *      changes the ruleset. Use the rule string is more specific.
-		 */
 		printf("Rule-Number: %i\n", rule.nr);
+		printf("Rule: ");
+		print_rule(&pr.rule, pr.anchor_call, 0);
+		printf("\n");
 		printf("States cur: %-6u\n", rule.states_cur);
 		printf("States tot: %-6u\n", rule.states_tot);
 		printf("Evaluations: %-8llu\n",
@@ -123,19 +125,23 @@ pfrules_read(void)
 	}
 
 	pr.rule.action = PF_PASS;
-	if (ioctl(dev, DIOCGETRULES, &pr)) {
+	if (ioctl(pfdev, DIOCGETRULES, &pr)) {
 		return (-1);
 	}
 
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
-		if (ioctl(dev, DIOCGETRULE, &pr)) {
+		if (ioctl(pfdev, DIOCGETRULE, &pr)) {
 			return (-1);
 		}
 		rule = pr.rule;
 #ifndef TEST
 		snprintf(rule_number, sizeof(rule_number), "%i", rule.nr);
+		/*
+		 * XXX:
+		 * get rule name, substitute spaces with "_"
+		 */
 		submit_counter("rule_states_current", rule_number,
 		    rule.states_cur);
 		submit_counter("rule_states_total", rule_number,
@@ -146,6 +152,9 @@ pfrules_read(void)
 		    (unsigned long long)(rule.packets[0] + rule.packets[1]));
 #else
 		printf("Rule-Number: %i\n", rule.nr);
+		printf("Rule: ");
+		print_rule(&pr.rule, pr.anchor_call, 0);
+		printf("\n");
 		printf("States cur: %-6u\n", rule.states_cur);
 		printf("States tot: %-6u\n", rule.states_tot);
 		printf("Evaluations: %-8llu\n",
@@ -155,7 +164,7 @@ pfrules_read(void)
 		printf("\n");
 #endif
 	}
-	close(dev);
+	close(pfdev);
 	return (0);
 }
 

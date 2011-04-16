@@ -42,4 +42,4 @@ typedef u_int64_t	counter_t;
 
 #define PF_SOCKET "/dev/pf"
 
-int	dev = -1;
+int	pfdev = -1;
