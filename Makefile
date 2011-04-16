@@ -1,16 +1,22 @@
 CC =		gcc
-COPTS =		-O2 -Wall -fPIC -DPIC -DFP_LAYOUT_NEED_NOTHING -pthread
+COPTS =		-O2 -Wall -fPIC -DPIC -DFP_LAYOUT_NEED_NOTHING -pthread -I . -I${COLLECTD_SRC}
 COLLECTD_SRC ?=	/usr/ports/pobj/collectd-4.10.2/collectd-4.10.2/src/
 
-all: pf.so
+all: pf.so pfrules.so
 
-test: pfcmd
+test: pfcmd pfrulescmd
 
 clean:
-	rm -f *.o *.so pfcmd
-
-pfcmd: pf.c
-	${CC} -DTEST ${COPTS} -I${COLLECTD_SRC} -o pfcmd pf.c
+	rm -f *.o *.so pfcmd pfrulescmd
 
 pf.so: pf.c
-	${CC} -shared ${COPTS} -I${COLLECTD_SRC} -o pf.so pf.c
+	${CC} -shared ${COPTS} -o pf.so pf.c
+
+pfrules.so: pfrules.c
+	${CC} -shared ${COPTS} -o pfrules.so pfrules.c
+
+pfcmd: pf.c
+	${CC} -DTEST ${COPTS} -o pfcmd pf.c
+
+pfrulescmd: pfrules.c
+	${CC} -DTEST ${COPTS} -o pfrulescmd pfrules.c

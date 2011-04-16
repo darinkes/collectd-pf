@@ -1,3 +1,4 @@
 *.swp
-pf.so
+*.so
 pfcmd
+pfrulescmd
