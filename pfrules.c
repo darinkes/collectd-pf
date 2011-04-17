@@ -129,7 +129,7 @@ pfrules_read(void)
 				*p2++ = *p1++;
 				++p1;
 			} else if(*p1 == '=') {
-				*--p2 = "";
+				*--p2 = (int)"";
 				*p2++ = *p1++;
 				++p1;
 			} else if(isspace(*p1)) {
@@ -201,7 +201,7 @@ pfrules_read(void)
 				*p2++ = *p1++;
 				++p1;
 			} else if(*p1 == '=') {
-				*--p2 = "";
+				*--p2 = (int)"";
 				*p2++ = *p1++;
 				++p1;
 			} else if(isspace(*p1)) {
@@ -277,7 +277,7 @@ pfrules_read(void)
 					*p2++ = *p1++;
 					++p1;
 				} else if(*p1 == '=') {
-					*--p2 = "";
+					*--p2 = (int)"";
 					*p2++ = *p1++;
 					++p1;
 				} else if(isspace(*p1)) {
