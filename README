@@ -1,7 +1,7 @@
 = Status
-	Totally WIP
+	Works for supported versions, but needs some serious testing.
 
-= Supported OpenBSD Version
+= Supported OpenBSD Versions
 	- OpenBSD 4.5
 	- OpenBSD 4.9/Current
 
