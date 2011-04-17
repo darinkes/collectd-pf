@@ -31,3 +31,8 @@
 
 	Note: The pf-device (/dev/pf) is only read-/writeable for root.
 	      So collectd has to be started as root.
+
+= Collectd-Web
+	See patch 0001-add-defs-for-pf-plugin.patch.
+	Set these lines to your collectd-web setup or apply
+	the patch with git.
