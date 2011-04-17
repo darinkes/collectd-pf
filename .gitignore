@@ -1,4 +1,6 @@
 *.swp
 *.so
+*.o
+pfutils.h
 pfcmd
 pfrulescmd
