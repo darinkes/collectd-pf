@@ -4,3 +4,29 @@
 = Supported OpenBSD Version
 	- OpenBSD 4.5
 	- OpenBSD 4.9/Current
+
+= Installation
+	1.) install collectd and make sources available
+		a.) # cd /usr/ports/sysutils/collectd && make install && make clean
+		b.) # cd /usr/ports/sysutils/collectd && make patch
+
+	2.) go to collect-pf directory and build the plugin
+		$ cd collectd-pf && make
+
+	3.) add types.db of pf
+		# cp types.pf.db /usr/local/share/collectd/
+
+	4.) adjust collectd.conf
+		a.) Add types.db
+			TypesDB     "/usr/local/share/collectd/types.pf.db"
+		b.) load Plugins
+			LoadPlugin pf
+			LoadPlugin pfrules
+
+	5.) start collectd
+		# collectd -C /etc/collectd.conf
+
+	6.) check /var/log/daemon for errors
+
+	Note: The pf-device (/dev/pf) is only read-/writeable for root.
+	      So collectd has to be started as root.
