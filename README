@@ -34,5 +34,5 @@
 
 = Collectd-Web
 	See patch 0001-add-defs-for-pf-plugin.patch.
-	Set these lines to your collectd-web setup or apply
-	the patch with git.
+	Add these lines to your collectd-web setup or apply
+	the patch manually with git.
