@@ -10,8 +10,9 @@
 		a.) # cd /usr/ports/sysutils/collectd && make install && make clean
 		b.) # cd /usr/ports/sysutils/collectd && make patch
 
-	2.) go to collect-pf directory and build the plugin
+	2.) go to collect-pf directory and build/install the plugin
 		$ cd collectd-pf && make
+		# cp *.so /usr/local/lib/collectd/
 
 	3.) add types.db of pf
 		# cp types.pf.db /usr/local/share/collectd/
