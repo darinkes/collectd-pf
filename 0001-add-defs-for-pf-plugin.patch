@@ -1,17 +1,17 @@
-From 8d9e5ba6e1ff07e11a676829d423d87355269628 Mon Sep 17 00:00:00 2001
+From 73ab9aa9f2a67d56c5be14e9cf2bee3532b0b0cb Mon Sep 17 00:00:00 2001
 From: Stefan Rinkes <stefan.rinkes@gmail.com>
 Date: Sat, 16 Apr 2011 23:40:36 +0200
 Subject: [PATCH] add defs for pf-plugin
 
 ---
- cgi-bin/collection.modified.cgi |  120 +++++++++++++++++++++++++++++++++++++++
- 1 files changed, 120 insertions(+), 0 deletions(-)
+ cgi-bin/collection.modified.cgi |  113 +++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 113 insertions(+), 0 deletions(-)
 
 diff --git a/cgi-bin/collection.modified.cgi b/cgi-bin/collection.modified.cgi
-index 275b11c..7a6b8c6 100755
+index 275b11c..8b05f1f 100755
 --- a/cgi-bin/collection.modified.cgi
 +++ b/cgi-bin/collection.modified.cgi
-@@ -1004,6 +1004,126 @@ sub load_graph_definitions {
+@@ -1004,6 +1004,119 @@ sub load_graph_definitions {
              'GPRINT:min:MIN:%6.2lf Min,', 'GPRINT:avg:AVERAGE:%6.2lf Avg,',
              'GPRINT:max:MAX:%6.2lf Max,', 'GPRINT:avg:LAST:%6.2lf Last'
          ],
@@ -19,7 +19,6 @@ index 275b11c..7a6b8c6 100755
 +            '-v', 'States',
 +            'DEF:min={file}:value:MIN',   'DEF:avg={file}:value:AVERAGE',
 +            'DEF:max={file}:value:MAX',   "AREA:max#$HalfBlue",
-+            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
 +            'CDEF:mytime=avg,TIME,TIME,IF',
 +            'CDEF:sample_len_raw=mytime,PREV(mytime),-',
 +            'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
@@ -34,7 +33,6 @@ index 275b11c..7a6b8c6 100755
 +            '-v', 'States',
 +            'DEF:min={file}:value:MIN',   'DEF:avg={file}:value:AVERAGE',
 +            'DEF:max={file}:value:MAX',   "AREA:max#$HalfBlue",
-+            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
 +            'CDEF:mytime=avg,TIME,TIME,IF',
 +            'CDEF:sample_len_raw=mytime,PREV(mytime),-',
 +            'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
@@ -63,7 +61,6 @@ index 275b11c..7a6b8c6 100755
 +            '-v', 'Bytes',
 +            'DEF:min={file}:value:MIN',   'DEF:avg={file}:value:AVERAGE',
 +            'DEF:max={file}:value:MAX',   "AREA:max#$HalfBlue",
-+            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
 +            'CDEF:mytime=avg,TIME,TIME,IF',
 +            'CDEF:sample_len_raw=mytime,PREV(mytime),-',
 +            'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
@@ -79,7 +76,6 @@ index 275b11c..7a6b8c6 100755
 +            '-v', 'Count',
 +            'DEF:min={file}:value:MIN',   'DEF:avg={file}:value:AVERAGE',
 +            'DEF:max={file}:value:MAX',   "AREA:max#$HalfBlue",
-+            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
 +            'CDEF:mytime=avg,TIME,TIME,IF',
 +            'CDEF:sample_len_raw=mytime,PREV(mytime),-',
 +            'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
@@ -94,7 +90,6 @@ index 275b11c..7a6b8c6 100755
 +            '-v', 'Count',
 +            'DEF:min={file}:value:MIN',   'DEF:avg={file}:value:AVERAGE',
 +            'DEF:max={file}:value:MAX',   "AREA:max#$HalfBlue",
-+            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
 +            'CDEF:mytime=avg,TIME,TIME,IF',
 +            'CDEF:sample_len_raw=mytime,PREV(mytime),-',
 +            'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
@@ -109,7 +104,6 @@ index 275b11c..7a6b8c6 100755
 +            '-v', 'Count',
 +            'DEF:min={file}:value:MIN',   'DEF:avg={file}:value:AVERAGE',
 +            'DEF:max={file}:value:MAX',   "AREA:max#$HalfBlue",
-+            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
 +            'CDEF:mytime=avg,TIME,TIME,IF',
 +            'CDEF:sample_len_raw=mytime,PREV(mytime),-',
 +            'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
@@ -124,7 +118,6 @@ index 275b11c..7a6b8c6 100755
 +            '-v', 'Count',
 +            'DEF:min={file}:value:MIN',   'DEF:avg={file}:value:AVERAGE',
 +            'DEF:max={file}:value:MAX',   "AREA:max#$HalfBlue",
-+            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
 +            'CDEF:mytime=avg,TIME,TIME,IF',
 +            'CDEF:sample_len_raw=mytime,PREV(mytime),-',
 +            'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
