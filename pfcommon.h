@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
+#include <err.h>
 
 #ifndef TEST
 #include "collectd.h"
@@ -36,7 +37,6 @@
 #include "plugin.h"
 #include "configfile.h"
 #else
-#include <err.h>
 typedef u_int64_t	counter_t;
 #endif
 
