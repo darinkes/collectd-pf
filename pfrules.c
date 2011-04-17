@@ -29,7 +29,7 @@ pfrules_init(void)
 {
 	struct pf_status	status;
 
-	if ((dev = open(PF_SOCKET, O_RDWR)) == -1) {
+	if ((dev = open(PF_SOCKET, O_RDONLY)) == -1) {
 		return (-1);
 	}
 	if (ioctl(dev, DIOCGETSTATUS, &status) == -1) {
@@ -89,7 +89,7 @@ pfrules_read(void)
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, path, sizeof(pr.anchor));
 
-	if ((dev = open(PF_SOCKET, O_RDWR)) == -1) {
+	if ((dev = open(PF_SOCKET, O_RDONLY)) == -1) {
 		return (-1);
 	}
 
