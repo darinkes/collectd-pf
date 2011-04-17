@@ -21,7 +21,7 @@
 static int	pfrules_init(void);
 static int	pfrules_read(void);
 #ifndef TEST
-static void	submit_counter(const char *, const char *, counter_t);
+static void	submit_counter(const char *, const char *, counter_t, int);
 #endif
 
 int
@@ -45,12 +45,15 @@ pfrules_init(void)
 
 #ifndef TEST
 void
-submit_counter(const char *rule_number, const char *inst, counter_t val)
+submit_counter(const char *rule_number, const char *inst, counter_t val, int usegauge)
 {
 	value_t		values[1];
 	value_list_t	vl = VALUE_LIST_INIT;
 
-	values[0].gauge = val;
+	if (usegauge)
+		values[0].gauge = val;
+	else
+		values[0].counter = val;
 
 	vl.values = values;
 	vl.values_len = 1;
@@ -140,13 +143,13 @@ pfrules_read(void)
 
 #ifndef TEST
 		submit_counter("states_cur", rulestring,
-		    rule.states_cur);
+		    rule.states_cur, 1);
 		submit_counter("states_tot", rulestring,
-		    rule.states_tot);
+		    rule.states_tot, 0);
 		submit_counter("evaluations", rulestring,
-		    (unsigned long long)rule.evaluations);
-		submit_counter("bytes", rulestring,
-		    (unsigned long long)(rule.packets[0] + rule.packets[1]));
+		    (unsigned long long)rule.evaluations, 0);
+		submit_counter("pf_bytes", rulestring,
+		    (unsigned long long)(rule.packets[0] + rule.packets[1]), 0);
 #else
 		printf("Rule-Number: %i\n", rule.nr);
 		printf("Rule: %s\n", rulestring);
@@ -212,13 +215,13 @@ pfrules_read(void)
 
 #ifndef TEST
 		submit_counter("states_cur", rulestring,
-		    rule.states_cur);
+		    rule.states_cur, 1);
 		submit_counter("states_tot", rulestring,
-		    rule.states_tot);
+		    rule.states_tot, 0);
 		submit_counter("evaluations", rulestring,
-		    (unsigned long long)rule.evaluations);
-		submit_counter("bytes", rulestring,
-		    (unsigned long long)(rule.packets[0] + rule.packets[1]));
+		    (unsigned long long)rule.evaluations, 0);
+		submit_counter("pf_bytes", rulestring,
+		    (unsigned long long)(rule.packets[0] + rule.packets[1]), 0);
 #else
 		printf("Rule-Number: %i\n", rule.nr);
 		printf("Rule: %s\n", rulestring);
@@ -292,13 +295,13 @@ pfrules_read(void)
 
 #ifndef TEST
 			submit_counter("states_cur", rulestring,
-			    rule.states_cur);
+			    rule.states_cur, 1);
 			submit_counter("states_tot", rulestring,
-			    rule.states_tot);
+			    rule.states_tot, 0);
 			submit_counter("evaluations", rulestring,
-			    (unsigned long long)rule.evaluations);
-			submit_counter("bytes", rulestring,
-			    (unsigned long long)(rule.packets[0] + rule.packets[1]));
+			    (unsigned long long)rule.evaluations, 0);
+			submit_counter("pf_bytes", rulestring,
+			    (unsigned long long)(rule.packets[0] + rule.packets[1]), 0);
 #else
 			printf("Rule-Number: %i\n", rule.nr);
 			printf("Rule: %s\n", rulestring);
