@@ -77,8 +77,10 @@ pfrules_read(void)
 	FILE			 *sfp = NULL;
 	int			 fd;
 	char			 rulestring[256];
+#ifdef OBSD45
 	static int		nattype[3] = { PF_NAT, PF_RDR, PF_BINAT };
 	int			i;
+#endif
 	char			anchorname[MAXPATHLEN];
 
 	memset(anchorname, 0, sizeof(anchorname));
@@ -93,6 +95,7 @@ pfrules_read(void)
 		return (-1);
 	}
 
+#ifdef OBSD45
 	pr.rule.action = PF_SCRUB;
 	if (ioctl(dev, DIOCGETRULES, &pr)) {
 		warn("DIOCGETRULES");
@@ -162,6 +165,7 @@ pfrules_read(void)
 		printf("\n");
 #endif
 	}
+#endif /* OBSD45 */
 
 	pr.rule.action = PF_PASS;
 	if (ioctl(dev, DIOCGETRULES, &pr)) {
@@ -235,6 +239,7 @@ pfrules_read(void)
 #endif
 	}
 
+#ifdef OBSD45
 	for (i = 0; i < 3; i++) {
 		pr.rule.action = nattype[i];
 		if (ioctl(dev, DIOCGETRULES, &pr)) {
@@ -316,6 +321,7 @@ pfrules_read(void)
 #endif
 		}
 	}
+#endif /* OBSD45 */
 
 	close(dev);
 	return (0);
