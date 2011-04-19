@@ -151,8 +151,14 @@ pfrules_read(void)
 		    rule.states_tot, 0);
 		submit_counter("evaluations", rulestring,
 		    (unsigned long long)rule.evaluations, 0);
-		submit_counter("pf_bytes", rulestring,
-		    (unsigned long long)(rule.packets[0] + rule.packets[1]), 0);
+		submit_counter("pf_packets_in", rulestring,
+		    (unsigned long long)rule.packets[0], 0);
+		submit_counter("pf_packets_out", rulestring,
+		    (unsigned long long)rule.packets[1], 0);
+		submit_counter("pf_bytes_in", rulestring,
+		    (unsigned long long)rule.bytes[0], 0);
+		submit_counter("pf_bytes_out", rulestring,
+		    (unsigned long long)rule.bytes[1], 0);
 #else
 		printf("Rule-Number: %i\n", rule.nr);
 		printf("Rule: %s\n", rulestring);
@@ -160,8 +166,14 @@ pfrules_read(void)
 		printf("States tot: %-6u\n", rule.states_tot);
 		printf("Evaluations: %-8llu\n",
 		    (unsigned long long)rule.evaluations);
-		printf("Bytes: %-10llu\n",
-		    (unsigned long long)(rule.packets[0] + rule.packets[1]));
+		printf("Packets in: %-10llu\n",
+		    (unsigned long long)rule.packets[0]);
+		printf("Packets out: %-10llu\n",
+		    (unsigned long long)rule.packets[1]);
+		printf("Bytes in: %-10llu\n",
+		    (unsigned long long)rule.bytes[0]);
+		printf("Bytes out: %-10llu\n",
+		    (unsigned long long)rule.bytes[1]);
 		printf("\n");
 #endif
 	}
@@ -224,8 +236,14 @@ pfrules_read(void)
 		    rule.states_tot, 0);
 		submit_counter("evaluations", rulestring,
 		    (unsigned long long)rule.evaluations, 0);
-		submit_counter("pf_bytes", rulestring,
-		    (unsigned long long)(rule.packets[0] + rule.packets[1]), 0);
+		submit_counter("pf_packets_in", rulestring,
+		    (unsigned long long)rule.packets[0], 0);
+		submit_counter("pf_packets_out", rulestring,
+		    (unsigned long long)rule.packets[1], 0);
+		submit_counter("pf_bytes_in", rulestring,
+		    (unsigned long long)rule.bytes[0], 0);
+		submit_counter("pf_bytes_out", rulestring,
+		    (unsigned long long)rule.bytes[1], 0);
 #else
 		printf("Rule-Number: %i\n", rule.nr);
 		printf("Rule: %s\n", rulestring);
@@ -233,8 +251,14 @@ pfrules_read(void)
 		printf("States tot: %-6u\n", rule.states_tot);
 		printf("Evaluations: %-8llu\n",
 		    (unsigned long long)rule.evaluations);
-		printf("Bytes: %-10llu\n",
-		    (unsigned long long)(rule.packets[0] + rule.packets[1]));
+		printf("Packets in: %-10llu\n",
+		    (unsigned long long)rule.packets[0]);
+		printf("Packets out: %-10llu\n",
+		    (unsigned long long)rule.packets[1]);
+		printf("Bytes in: %-10llu\n",
+		    (unsigned long long)rule.bytes[0]);
+		printf("Bytes out: %-10llu\n",
+		    (unsigned long long)rule.bytes[1]);
 		printf("\n");
 #endif
 	}
@@ -306,8 +330,14 @@ pfrules_read(void)
 			    rule.states_tot, 0);
 			submit_counter("evaluations", rulestring,
 			    (unsigned long long)rule.evaluations, 0);
-			submit_counter("pf_bytes", rulestring,
-			    (unsigned long long)(rule.packets[0] + rule.packets[1]), 0);
+			submit_counter("pf_packets_in", rulestring,
+			    (unsigned long long)rule.packets[0], 0);
+			submit_counter("pf_packets_out", rulestring,
+			    (unsigned long long)rule.packets[1], 0);
+			submit_counter("pf_bytes_in", rulestring,
+			    (unsigned long long)rule.bytes[0], 0);
+			submit_counter("pf_bytes_out", rulestring,
+			    (unsigned long long)rule.bytes[1], 0);
 #else
 			printf("Rule-Number: %i\n", rule.nr);
 			printf("Rule: %s\n", rulestring);
@@ -315,8 +345,14 @@ pfrules_read(void)
 			printf("States tot: %-6u\n", rule.states_tot);
 			printf("Evaluations: %-8llu\n",
 			    (unsigned long long)rule.evaluations);
-			printf("Bytes: %-10llu\n",
-			    (unsigned long long)(rule.packets[0] + rule.packets[1]));
+			printf("Packets in: %-10llu\n",
+			    (unsigned long long)rule.packets[0]);
+			printf("Packets out: %-10llu\n",
+			    (unsigned long long)rule.packets[1]);
+			printf("Bytes in: %-10llu\n",
+			    (unsigned long long)rule.bytes[0]);
+			printf("Bytes out: %-10llu\n",
+			    (unsigned long long)rule.bytes[1]);
 			printf("\n");
 #endif
 		}

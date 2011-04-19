@@ -1,17 +1,17 @@
-From 73ab9aa9f2a67d56c5be14e9cf2bee3532b0b0cb Mon Sep 17 00:00:00 2001
+From 10ed818c00e26f84ea94a3e22f1ffb772dd86d2f Mon Sep 17 00:00:00 2001
 From: Stefan Rinkes <stefan.rinkes@gmail.com>
 Date: Sat, 16 Apr 2011 23:40:36 +0200
 Subject: [PATCH] add defs for pf-plugin
 
 ---
- cgi-bin/collection.modified.cgi |  113 +++++++++++++++++++++++++++++++++++++++
- 1 files changed, 113 insertions(+), 0 deletions(-)
+ cgi-bin/collection.modified.cgi |  154 +++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 154 insertions(+), 0 deletions(-)
 
 diff --git a/cgi-bin/collection.modified.cgi b/cgi-bin/collection.modified.cgi
-index 275b11c..8b05f1f 100755
+index 275b11c..bbdc0be 100755
 --- a/cgi-bin/collection.modified.cgi
 +++ b/cgi-bin/collection.modified.cgi
-@@ -1004,6 +1004,119 @@ sub load_graph_definitions {
+@@ -1004,6 +1004,160 @@ sub load_graph_definitions {
              'GPRINT:min:MIN:%6.2lf Min,', 'GPRINT:avg:AVERAGE:%6.2lf Avg,',
              'GPRINT:max:MAX:%6.2lf Max,', 'GPRINT:avg:LAST:%6.2lf Last'
          ],
@@ -57,7 +57,7 @@ index 275b11c..8b05f1f 100755
 +            'GPRINT:max:MAX:%10.2lf Max,', 'GPRINT:avg:LAST:%10.2lf Last',
 +            'GPRINT:avg_sum:LAST:(ca. %10.2lf%s Total)\l'
 +        ],
-+        pf_bytes => [
++        pf_bytes_in => [
 +            '-v', 'Bytes',
 +            'DEF:min={file}:value:MIN',   'DEF:avg={file}:value:AVERAGE',
 +            'DEF:max={file}:value:MAX',   "AREA:max#$HalfBlue",
@@ -69,8 +69,49 @@ index 275b11c..8b05f1f 100755
 +            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
 +            'GPRINT:min:MIN:%10.2lf Min,', 'GPRINT:avg:AVERAGE:%10.2lf Avg,',
 +            'GPRINT:max:MAX:%10.2lf Max,', 'GPRINT:avg:LAST:%10.2lf Last',
++            'GPRINT:avg_sum:LAST:(ca. %10.2lf%sB Total)\l'
++        ],
++        pf_bytes_out => [
++            '-v', 'Bytes',
++            'DEF:min={file}:value:MIN',   'DEF:avg={file}:value:AVERAGE',
++            'DEF:max={file}:value:MAX',   "AREA:max#$HalfBlue",
++            'CDEF:mytime=avg,TIME,TIME,IF',
++            'CDEF:sample_len_raw=mytime,PREV(mytime),-',
++            'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
++            'CDEF:avg_sample=avg,UN,0,avg,IF,sample_len,*',
++            'CDEF:avg_sum=PREV,UN,0,PREV,IF,avg_sample,+',
++            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
++            'GPRINT:min:MIN:%10.2lf Min,', 'GPRINT:avg:AVERAGE:%10.2lf Avg,',
++            'GPRINT:max:MAX:%10.2lf Max,', 'GPRINT:avg:LAST:%10.2lf Last',
++            'GPRINT:avg_sum:LAST:(ca. %10.2lf%sB Total)\l'
++        ],
++        pf_packets_out => [
++            '-v', 'Packets',
++            'DEF:min={file}:value:MIN',   'DEF:avg={file}:value:AVERAGE',
++            'DEF:max={file}:value:MAX',   "AREA:max#$HalfBlue",
++            'CDEF:mytime=avg,TIME,TIME,IF',
++            'CDEF:sample_len_raw=mytime,PREV(mytime),-',
++            'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
++            'CDEF:avg_sample=avg,UN,0,avg,IF,sample_len,*',
++            'CDEF:avg_sum=PREV,UN,0,PREV,IF,avg_sample,+',
++            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
++            'GPRINT:min:MIN:%10.2lf Min,', 'GPRINT:avg:AVERAGE:%10.2lf Avg,',
++            'GPRINT:max:MAX:%10.2lf Max,', 'GPRINT:avg:LAST:%10.2lf Last',
 +            'GPRINT:avg_sum:LAST:(ca. %10.2lf%s Total)\l'
-+
++        ],
++        pf_packets_in => [
++            '-v', 'Packets',
++            'DEF:min={file}:value:MIN',   'DEF:avg={file}:value:AVERAGE',
++            'DEF:max={file}:value:MAX',   "AREA:max#$HalfBlue",
++            'CDEF:mytime=avg,TIME,TIME,IF',
++            'CDEF:sample_len_raw=mytime,PREV(mytime),-',
++            'CDEF:sample_len=sample_len_raw,UN,0,sample_len_raw,IF',
++            'CDEF:avg_sample=avg,UN,0,avg,IF,sample_len,*',
++            'CDEF:avg_sum=PREV,UN,0,PREV,IF,avg_sample,+',
++            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
++            'GPRINT:min:MIN:%10.2lf Min,', 'GPRINT:avg:AVERAGE:%10.2lf Avg,',
++            'GPRINT:max:MAX:%10.2lf Max,', 'GPRINT:avg:LAST:%10.2lf Last',
++            'GPRINT:avg_sum:LAST:(ca. %10.2lf%s Total)\l'
 +        ],
 +        pf_counters => [
 +            '-v', 'Count',
