@@ -1,4 +1,4 @@
-From 10ed818c00e26f84ea94a3e22f1ffb772dd86d2f Mon Sep 17 00:00:00 2001
+From d4cc1cf2817881042329267355e589e55e06c8ef Mon Sep 17 00:00:00 2001
 From: Stefan Rinkes <stefan.rinkes@gmail.com>
 Date: Sat, 16 Apr 2011 23:40:36 +0200
 Subject: [PATCH] add defs for pf-plugin
@@ -8,7 +8,7 @@ Subject: [PATCH] add defs for pf-plugin
  1 files changed, 154 insertions(+), 0 deletions(-)
 
 diff --git a/cgi-bin/collection.modified.cgi b/cgi-bin/collection.modified.cgi
-index 275b11c..bbdc0be 100755
+index 275b11c..e2064b1 100755
 --- a/cgi-bin/collection.modified.cgi
 +++ b/cgi-bin/collection.modified.cgi
 @@ -1004,6 +1004,160 @@ sub load_graph_definitions {
@@ -67,8 +67,8 @@ index 275b11c..bbdc0be 100755
 +            'CDEF:avg_sample=avg,UN,0,avg,IF,sample_len,*',
 +            'CDEF:avg_sum=PREV,UN,0,PREV,IF,avg_sample,+',
 +            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
-+            'GPRINT:min:MIN:%10.2lf Min,', 'GPRINT:avg:AVERAGE:%10.2lf Avg,',
-+            'GPRINT:max:MAX:%10.2lf Max,', 'GPRINT:avg:LAST:%10.2lf Last',
++            'GPRINT:min:MIN:%10.2lf%s Min,', 'GPRINT:avg:AVERAGE:%10.2lf%s Avg,',
++            'GPRINT:max:MAX:%10.2lf%s Max,', 'GPRINT:avg:LAST:%10.2lf%s Last',
 +            'GPRINT:avg_sum:LAST:(ca. %10.2lf%sB Total)\l'
 +        ],
 +        pf_bytes_out => [
@@ -81,8 +81,8 @@ index 275b11c..bbdc0be 100755
 +            'CDEF:avg_sample=avg,UN,0,avg,IF,sample_len,*',
 +            'CDEF:avg_sum=PREV,UN,0,PREV,IF,avg_sample,+',
 +            "AREA:min#$Canvas",           "LINE1:avg#$FullBlue:Current Count",
-+            'GPRINT:min:MIN:%10.2lf Min,', 'GPRINT:avg:AVERAGE:%10.2lf Avg,',
-+            'GPRINT:max:MAX:%10.2lf Max,', 'GPRINT:avg:LAST:%10.2lf Last',
++            'GPRINT:min:MIN:%10.2lf%s Min,', 'GPRINT:avg:AVERAGE:%10.2lf%s Avg,',
++            'GPRINT:max:MAX:%10.2lf%s Max,', 'GPRINT:avg:LAST:%10.2lf%s Last',
 +            'GPRINT:avg_sum:LAST:(ca. %10.2lf%sB Total)\l'
 +        ],
 +        pf_packets_out => [
