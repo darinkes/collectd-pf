@@ -20,7 +20,7 @@
 
 static int	pfrules_init(void);
 static int	pfrules_read(void);
-int		get_rulestring(struct pfioc_rule *, const char *);
+static void	get_rulestring(struct pfioc_rule *, const char *);
 #ifndef TEST
 static void	submit_counter(const char *, const char *, counter_t, int);
 #endif
@@ -45,75 +45,6 @@ pfrules_init(void)
 }
 
 int
-get_rulestring(struct pfioc_rule *pr, const char *rulestring)
-{
-	char			 sfn[23];
-	FILE			 *sfp = NULL;
-	int			 fd;
-
-	strlcpy(sfn, "/tmp/pfutils.XXXXXXXXXX", sizeof(sfn));
-	if ((fd = mkstemp(sfn)) == -1 ||
-	    (sfp = fdopen(fd, "w+")) == NULL) {
-		if (fd != -1) {
-			unlink(sfn);
-			close(fd);
-		}
-	}
-	freopen(sfn, "w", stdout);
-	print_rule(&pr->rule, pr->anchor_call, 0);
-	freopen("/dev/tty", "w", stdout);
-	fgets((char *)rulestring, 256, sfp);
-	fclose(sfp);
-	remove(sfn);
-
-	char *p1 = (char *)rulestring;
-	char *p2 = (char *)rulestring;
-	while(*p1 != 0) {
-		if(*p1 == '!') {
-			*p2++ = *p1++;
-			++p1;
-		} else if(*p1 == '=') {
-			*--p2 = (int)"";
-			*p2++ = *p1++;
-			++p1;
-		} else if(isspace(*p1)) {
-			*p2++ = '-';
-			++p1;
-		} else if((*p1 == '(') || (*p1 == ')') ||
-			  (*p1 == '>') || (*p1 == '-')) {
-			++p1;
-		} else {
-			*p2++ = *p1++;
-		}
-	}
-	*p2 = 0;
-	return 0;
-}
-
-#ifndef TEST
-void
-submit_counter(const char *rule_number, const char *inst, counter_t val, int usegauge)
-{
-	value_t		values[1];
-	value_list_t	vl = VALUE_LIST_INIT;
-
-	if (usegauge)
-		values[0].gauge = val;
-	else
-		values[0].counter = val;
-
-	vl.values = values;
-	vl.values_len = 1;
-	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
-	sstrncpy (vl.plugin, "pfrules", sizeof (vl.plugin));
-	sstrncpy (vl.type, rule_number, sizeof(vl.type));
-	sstrncpy (vl.type_instance, inst, sizeof(vl.type_instance));
-	plugin_dispatch_values(&vl);
-}
-#endif
-
-
-int
 pfrules_read(void)
 {
 	struct pfioc_rule	 pr;
@@ -122,10 +53,10 @@ pfrules_read(void)
 	char			*path;
 	char			 rulestring[256];
 #ifdef OBSD45
-	static int		nattype[3] = { PF_NAT, PF_RDR, PF_BINAT };
-	int			i;
+	int			 i;
+	static int		 nattype[3] = { PF_NAT, PF_RDR, PF_BINAT };
 #endif
-	char			anchorname[MAXPATHLEN];
+	char			 anchorname[MAXPATHLEN];
 
 	memset(anchorname, 0, sizeof(anchorname));
 
@@ -186,7 +117,7 @@ pfrules_read(void)
 		printf("Bytes out: %-10llu\n",
 		    (unsigned long long)rule.bytes[1]);
 		printf("\n");
-#endif
+#endif /* TEST */
 	}
 #endif /* OBSD45 */
 
@@ -237,7 +168,7 @@ pfrules_read(void)
 		printf("Bytes out: %-10llu\n",
 		    (unsigned long long)rule.bytes[1]);
 		printf("\n");
-#endif
+#endif /* TEST */
 	}
 
 #ifdef OBSD45
@@ -291,7 +222,7 @@ pfrules_read(void)
 			printf("Bytes out: %-10llu\n",
 			    (unsigned long long)rule.bytes[1]);
 			printf("\n");
-#endif
+#endif /* TEST */
 		}
 	}
 #endif /* OBSD45 */
@@ -299,6 +230,75 @@ pfrules_read(void)
 	close(dev);
 	return (0);
 }
+
+void
+get_rulestring(struct pfioc_rule *pr, const char *rulestring)
+{
+	char		 sfn[23];
+	FILE		 *sfp = NULL;
+	int		 fd;
+
+	strlcpy(sfn, "/tmp/pfutils.XXXXXXXXXX", sizeof(sfn));
+	if ((fd = mkstemp(sfn)) == -1 ||
+	    (sfp = fdopen(fd, "w+")) == NULL) {
+		if (fd != -1) {
+			unlink(sfn);
+			close(fd);
+		}
+	}
+	freopen(sfn, "w", stdout);
+	print_rule(&pr->rule, pr->anchor_call, 0);
+	freopen("/dev/tty", "w", stdout);
+	fgets((char *)rulestring, 256, sfp);
+	fclose(sfp);
+	remove(sfn);
+
+	char *p1 = (char *)rulestring;
+	char *p2 = (char *)rulestring;
+	while(*p1 != 0) {
+		if(*p1 == '!') {
+			*p2++ = *p1++;
+			++p1;
+		} else if(*p1 == '=') {
+			*--p2 = (int)"";
+			*p2++ = *p1++;
+			++p1;
+		} else if(isspace(*p1)) {
+			*p2++ = '-';
+			++p1;
+		} else if((*p1 == '(') || (*p1 == ')') ||
+			  (*p1 == '>') || (*p1 == '-')) {
+			++p1;
+		} else {
+			*p2++ = *p1++;
+		}
+	}
+	*p2 = 0;
+
+	return;
+}
+
+#ifndef TEST
+void
+submit_counter(const char *rule_number, const char *inst, counter_t val, int usegauge)
+{
+	value_t		values[1];
+	value_list_t	vl = VALUE_LIST_INIT;
+
+	if (usegauge)
+		values[0].gauge = val;
+	else
+		values[0].counter = val;
+
+	vl.values = values;
+	vl.values_len = 1;
+	sstrncpy (vl.host, hostname_g, sizeof (vl.host));
+	sstrncpy (vl.plugin, "pfrules", sizeof (vl.plugin));
+	sstrncpy (vl.type, rule_number, sizeof(vl.type));
+	sstrncpy (vl.type_instance, inst, sizeof(vl.type_instance));
+	plugin_dispatch_values(&vl);
+}
+#endif /* TEST */
 
 #ifdef TEST
 int
@@ -315,4 +315,4 @@ void module_register(void) {
 	plugin_register_init("pfrules", pfrules_init);
 	plugin_register_read("pfrules", pfrules_read);
 }
-#endif
+#endif /* TEST */
