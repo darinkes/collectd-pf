@@ -20,6 +20,7 @@
 
 static int	pfrules_init(void);
 static int	pfrules_read(void);
+int		get_rulestring(struct pfioc_rule *, const char *);
 #ifndef TEST
 static void	submit_counter(const char *, const char *, counter_t, int);
 #endif
@@ -41,6 +42,52 @@ pfrules_init(void)
 		return (-1);
 
 	return (0);
+}
+
+int
+get_rulestring(struct pfioc_rule *pr, const char *rulestring)
+{
+	char			 sfn[23];
+	FILE			 *sfp = NULL;
+	int			 fd;
+
+	strlcpy(sfn, "/tmp/pfutils.XXXXXXXXXX", sizeof(sfn));
+	if ((fd = mkstemp(sfn)) == -1 ||
+	    (sfp = fdopen(fd, "w+")) == NULL) {
+		if (fd != -1) {
+			unlink(sfn);
+			close(fd);
+		}
+	}
+	freopen(sfn, "w", stdout);
+	print_rule(&pr->rule, pr->anchor_call, 0);
+	freopen("/dev/tty", "w", stdout);
+	fgets((char *)rulestring, 256, sfp);
+	fclose(sfp);
+	remove(sfn);
+
+	char *p1 = (char *)rulestring;
+	char *p2 = (char *)rulestring;
+	while(*p1 != 0) {
+		if(*p1 == '!') {
+			*p2++ = *p1++;
+			++p1;
+		} else if(*p1 == '=') {
+			*--p2 = (int)"";
+			*p2++ = *p1++;
+			++p1;
+		} else if(isspace(*p1)) {
+			*p2++ = '-';
+			++p1;
+		} else if((*p1 == '(') || (*p1 == ')') ||
+			  (*p1 == '>') || (*p1 == '-')) {
+			++p1;
+		} else {
+			*p2++ = *p1++;
+		}
+	}
+	*p2 = 0;
+	return 0;
 }
 
 #ifndef TEST
@@ -73,9 +120,6 @@ pfrules_read(void)
 	struct pf_rule		 rule;
 	u_int32_t		 nr, mnr;
 	char			*path;
-	char			 sfn[23];
-	FILE			 *sfp = NULL;
-	int			 fd;
 	char			 rulestring[256];
 #ifdef OBSD45
 	static int		nattype[3] = { PF_NAT, PF_RDR, PF_BINAT };
@@ -110,40 +154,7 @@ pfrules_read(void)
 			return (-1);
 		}
 		rule = pr.rule;
-		strlcpy(sfn, "/tmp/pfutils.XXXXXXXXXX", sizeof(sfn));
-		if ((fd = mkstemp(sfn)) == -1 ||
-		    (sfp = fdopen(fd, "w+")) == NULL) {
-			if (fd != -1) {
-				unlink(sfn);
-				close(fd);
-			}
-		}
-		freopen(sfn, "w", stdout);
-		print_rule(&pr.rule, pr.anchor_call, 0);
-		freopen("/dev/tty", "w", stdout);
-		fgets(rulestring, sizeof(rulestring), sfp);
-		fclose(sfp);
-		remove(sfn);
-
-		char *p1 = rulestring;
-		char *p2 = rulestring;
-		while(*p1 != 0) {
-			if(*p1 == '!') {
-				*p2++ = *p1++;
-				++p1;
-			} else if(*p1 == '=') {
-				*--p2 = (int)"";
-				*p2++ = *p1++;
-				++p1;
-			} else if(isspace(*p1)) {
-				*p2++ = '-';
-				++p1;
-			} else {
-				*p2++ = *p1++;
-			}
-		}
-		*p2 = 0;
-
+		get_rulestring(&pr, rulestring);
 #ifndef TEST
 		submit_counter("states_cur", rulestring,
 		    rule.states_cur, 1);
@@ -194,41 +205,7 @@ pfrules_read(void)
 		}
 		rule = pr.rule;
 
-		strlcpy(sfn, "/tmp/pfutils.XXXXXXXXXX", sizeof(sfn));
-		if ((fd = mkstemp(sfn)) == -1 ||
-		    (sfp = fdopen(fd, "w+")) == NULL) {
-			if (fd != -1) {
-				unlink(sfn);
-				close(fd);
-			}
-		}
-
-		freopen(sfn, "w", stdout);
-		print_rule(&pr.rule, pr.anchor_call, 0);
-		freopen("/dev/tty", "w", stdout);
-		fgets(rulestring, sizeof(rulestring), sfp);
-		fclose(sfp);
-		remove(sfn);
-
-		char *p1 = rulestring;
-		char *p2 = rulestring;
-		while(*p1 != 0) {
-			if(*p1 == '!') {
-				*p2++ = *p1++;
-				++p1;
-			} else if(*p1 == '=') {
-				*--p2 = (int)"";
-				*p2++ = *p1++;
-				++p1;
-			} else if(isspace(*p1)) {
-				*p2++ = '-';
-				++p1;
-			} else {
-				*p2++ = *p1++;
-			}
-		}
-		*p2 = 0;
-
+		get_rulestring(&pr, rulestring);
 #ifndef TEST
 		submit_counter("states_cur", rulestring,
 		    rule.states_cur, 1);
@@ -280,49 +257,9 @@ pfrules_read(void)
 			if (pfctl_get_pool(dev, &pr.rule.rpool, nr,
 			    pr.ticket, nattype[i], anchorname) != 0)
 				return (-1);
-
 			rule = pr.rule;
-
-			strlcpy(sfn, "/tmp/pfutils.XXXXXXXXXX", sizeof(sfn));
-			if ((fd = mkstemp(sfn)) == -1 ||
-			    (sfp = fdopen(fd, "w+")) == NULL) {
-				if (fd != -1) {
-					unlink(sfn);
-					close(fd);
-				}
-			}
-
-			freopen(sfn, "w", stdout);
-			print_rule(&pr.rule, pr.anchor_call, 0);
-			freopen("/dev/tty", "w", stdout);
-			fgets(rulestring, sizeof(rulestring), sfp);
-			fclose(sfp);
-			remove(sfn);
-
-			char *p1 = rulestring;
-			char *p2 = rulestring;
-			while(*p1 != 0) {
-				if(*p1 == '!') {
-					*p2++ = *p1++;
-					++p1;
-				} else if(*p1 == '=') {
-					*--p2 = (int)"";
-					*p2++ = *p1++;
-					++p1;
-				} else if(isspace(*p1)) {
-					*p2++ = '-';
-					++p1;
-				} else if((*p1 == '(') || (*p1 == ')') ||
-					  (*p1 == '>') || (*p1 == '-')) {
-					++p1;
-				} else {
-					*p2++ = *p1++;
-				}
-			}
-			*p2 = 0;
-
+			get_rulestring(&pr, rulestring);
 			pfctl_clear_pool(&pr.rule.rpool);
-
 #ifndef TEST
 			submit_counter("states_cur", rulestring,
 			    rule.states_cur, 1);
