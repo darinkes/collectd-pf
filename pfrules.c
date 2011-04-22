@@ -52,7 +52,7 @@ pfrules_read(void)
 	u_int32_t		 nr, mnr;
 	char			*path;
 	char			 rulestring[256];
-#ifdef OBSD45
+#if VERSION < 46
 	int			 i;
 	static int		 nattype[3] = { PF_NAT, PF_RDR, PF_BINAT };
 #endif
@@ -70,7 +70,7 @@ pfrules_read(void)
 		return (-1);
 	}
 
-#ifdef OBSD45
+#if VERSION < 46
 	pr.rule.action = PF_SCRUB;
 	if (ioctl(dev, DIOCGETRULES, &pr)) {
 		warn("DIOCGETRULES");
@@ -119,7 +119,7 @@ pfrules_read(void)
 		printf("\n");
 #endif /* TEST */
 	}
-#endif /* OBSD45 */
+#endif /* VERSION */
 
 	pr.rule.action = PF_PASS;
 	if (ioctl(dev, DIOCGETRULES, &pr)) {
@@ -171,7 +171,7 @@ pfrules_read(void)
 #endif /* TEST */
 	}
 
-#ifdef OBSD45
+#if VERSION < 46
 	for (i = 0; i < 3; i++) {
 		pr.rule.action = nattype[i];
 		if (ioctl(dev, DIOCGETRULES, &pr)) {
@@ -225,7 +225,7 @@ pfrules_read(void)
 #endif /* TEST */
 		}
 	}
-#endif /* OBSD45 */
+#endif /* VERSION */
 
 	close(dev);
 	return (0);
