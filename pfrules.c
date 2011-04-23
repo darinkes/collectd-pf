@@ -73,7 +73,7 @@ pfrules_read(void)
 #if VERSION < 46
 	pr.rule.action = PF_SCRUB;
 	if (ioctl(dev, DIOCGETRULES, &pr)) {
-		warn("DIOCGETRULES");
+		warn("DIOCGETRULES1: %i", dev);
 		return (-1);
 	}
 
@@ -81,7 +81,7 @@ pfrules_read(void)
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
 		if (ioctl(dev, DIOCGETRULE, &pr)) {
-			warn("DIOCGETRULE");
+			warn("DIOCGETRULE1: %i", dev);
 			return (-1);
 		}
 		rule = pr.rule;
@@ -119,19 +119,28 @@ pfrules_read(void)
 		printf("\n");
 #endif /* TEST */
 	}
+	close(dev);
 #endif /* VERSION */
+
+	if ((dev = open(PF_SOCKET, O_RDONLY)) == -1) {
+		return (-1);
+	}
 
 	pr.rule.action = PF_PASS;
 	if (ioctl(dev, DIOCGETRULES, &pr)) {
-		warn("DIOCGETRULES");
+		warn("DIOCGETRULES2: %i", dev);
 		return (-1);
 	}
+	close(dev);
 
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
+		if ((dev = open(PF_SOCKET, O_RDONLY)) == -1) {
+			return (-1);
+		}
 		if (ioctl(dev, DIOCGETRULE, &pr)) {
-			warn("DIOCGETRULE");
+			warn("DIOCGETRULE2: %i", dev);
 			return (-1);
 		}
 		rule = pr.rule;
@@ -169,20 +178,28 @@ pfrules_read(void)
 		    (unsigned long long)rule.bytes[1]);
 		printf("\n");
 #endif /* TEST */
+		close(dev);
 	}
 
 #if VERSION < 46
 	for (i = 0; i < 3; i++) {
-		pr.rule.action = nattype[i];
-		if (ioctl(dev, DIOCGETRULES, &pr)) {
-			warn("DIOCGETRULES");
+		if ((dev = open(PF_SOCKET, O_RDONLY)) == -1) {
 			return (-1);
 		}
+		pr.rule.action = nattype[i];
+		if (ioctl(dev, DIOCGETRULES, &pr)) {
+			warn("DIOCGETRULES3: %i", dev);
+			return (-1);
+		}
+		close(dev);
 		mnr = pr.nr;
 		for (nr = 0; nr < mnr; ++nr) {
 			pr.nr = nr;
+			if ((dev = open(PF_SOCKET, O_RDONLY)) == -1) {
+				return (-1);
+			}
 			if (ioctl(dev, DIOCGETRULE, &pr)) {
-				warn("DIOCGETRULE");
+				warn("DIOCGETRULE3: %i", dev);
 				return (-1);
 			}
 			if (pfctl_get_pool(dev, &pr.rule.rpool, nr,
@@ -223,11 +240,10 @@ pfrules_read(void)
 			    (unsigned long long)rule.bytes[1]);
 			printf("\n");
 #endif /* TEST */
+		close(dev);
 		}
 	}
 #endif /* VERSION */
-
-	close(dev);
 	return (0);
 }
 
