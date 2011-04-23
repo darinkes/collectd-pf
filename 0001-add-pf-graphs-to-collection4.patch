@@ -1,0 +1,109 @@
+From c0b8c3e823eb5100f9d7eae96e44bc10967288e1 Mon Sep 17 00:00:00 2001
+From: Stefan Rinkes <stefan.rinkes@gmail.com>
+Date: Sat, 23 Apr 2011 10:44:52 +0200
+Subject: [PATCH] add pf-graphs to collection4
+
+---
+ share/collection.conf |   89 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 89 insertions(+), 0 deletions(-)
+
+diff --git a/share/collection.conf b/share/collection.conf
+index b0f4d43..9c7d13c 100644
+--- a/share/collection.conf
++++ b/share/collection.conf
+@@ -1005,3 +1005,92 @@ CacheFile "/tmp/collection4.json"
+   </DEF>
+ </Graph>
+ 
++<Graph>
++  Host "/any/"
++  Plugin "pf"
++  PluginInstance "/any/"
++  Type "pf_counters"
++  TypeInstance "/any/"
++
++  Title "PF counters"
++  VerticalLabel "Count"
++
++  <DEF>
++    DSName "value"
++    Legend "Value   "
++    Color "e8e8e8"
++    Format "%10.2lf"
++  </DEF>
++</Graph>
++
++<Graph>
++  Host "/any/"
++  Plugin "pf"
++  PluginInstance "/any/"
++  Type "pf_limits"
++  TypeInstance "/any/"
++
++  Title "PF limits"
++  VerticalLabel "Count"
++
++  <DEF>
++    DSName "value"
++    Legend "Value   "
++    Color "e8e8e8"
++    Format "%10.2lf"
++  </DEF>
++</Graph>
++
++<Graph>
++  Host "/any/"
++  Plugin "pf"
++  PluginInstance "/any/"
++  Type "pf_source"
++  TypeInstance "/any/"
++
++  Title "PF source"
++  VerticalLabel "Count"
++
++  <DEF>
++    DSName "value"
++    Legend "Value   "
++    Color "e8e8e8"
++    Format "%10.2lf"
++  </DEF>
++</Graph>
++
++<Graph>
++  Host "/any/"
++  Plugin "pf"
++  PluginInstance "/any/"
++  Type "pf_state"
++  TypeInstance "/any/"
++
++  Title "PF state"
++  VerticalLabel "Count"
++
++  <DEF>
++    DSName "value"
++    Legend "Value   "
++    Color "e8e8e8"
++    Format "%10.2lf"
++  </DEF>
++</Graph>
++
++<Graph>
++  Host "/any/"
++  Plugin "pfrules"
++  PluginInstance "/any/"
++  Type "/any/"
++  TypeInstance "/any/"
++
++  Title "PFRules"
++  VerticalLabel ""
++
++  <DEF>
++    DSName "value"
++    Legend "Value   "
++    Color "e8e8e8"
++    Format "%10.2lf"
++  </DEF>
++</Graph>
+-- 
+1.7.1
+
