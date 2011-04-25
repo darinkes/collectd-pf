@@ -300,15 +300,17 @@ get_rulestring(struct pfioc_rule *pr, char *rulestring)
 		warn("mkstemp failed: %s", sfn);
 		return (-1);
 	}
-	if (!freopen(sfn, "w", stdout)) {
+	if (freopen(sfn, "w", stdout) == NULL) {
 		fclose(sfp);
 		remove(sfn);
+		warn("freopen1 failed");
 		return (-1);
 	}
 	print_rule(&pr->rule, pr->anchor_call, 0);
-	if (!freopen("/dev/tty", "w", stdout)) {
+	if (freopen("/dev/tty", "w", stdout) == NULL) {
 		fclose(sfp);
 		remove(sfn);
+		warn("freopen2 failed");
 		return (-1);
 	}
 	if (fgets(rulestring, 256, sfp) == NULL) {
