@@ -34,11 +34,11 @@ pfrules_init(void)
 	int			pfrulesdev = -1;
 
 	if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
-		warn("unable to open %s", pf_device);
+		ERROR("unable to open %s", pf_device);
 		return (-1);
 	}
 	if (ioctl(pfrulesdev, DIOCGETSTATUS, &status) == -1) {
-		warn("DIOCGETSTATUS: %i", pfrulesdev);
+		ERROR("DIOCGETSTATUS: %i", pfrulesdev);
 		close(pfrulesdev);
 		return (-1);
 	}
@@ -68,7 +68,7 @@ pfrules_read(void)
 	memset(anchorname, 0, sizeof(anchorname));
 
 	if ((path = calloc(1, MAXPATHLEN)) == NULL) {
-		warn("calloc path failed");
+		ERROR("calloc path failed");
 		return (-1);
 	}
 
@@ -77,13 +77,13 @@ pfrules_read(void)
 
 #if VERSION < 46
 	if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
-		warn("unable to open %s", pf_device);
+		ERROR("unable to open %s", pf_device);
 		goto error;
 	}
 
 	pr.rule.action = PF_SCRUB;
 	if (ioctl(pfrulesdev, DIOCGETRULES, &pr)) {
-		warn("DIOCGETRULES1: %i", pfrulesdev);
+		ERROR("DIOCGETRULES1: %i", pfrulesdev);
 		goto error;
 	}
 
@@ -91,12 +91,12 @@ pfrules_read(void)
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
 		if (ioctl(pfrulesdev, DIOCGETRULE, &pr)) {
-			warn("DIOCGETRULE1: %i", pfrulesdev);
+			ERROR("DIOCGETRULE1: %i", pfrulesdev);
 			goto error;
 		}
 		rule = pr.rule;
 		if (get_rulestring(&pr, rulestring) == -1) {
-			warn("get_rulestring failed");
+			ERROR("get_rulestring failed");
 			goto error;
 		}
 #ifndef TEST
@@ -136,13 +136,13 @@ pfrules_read(void)
 #endif /* VERSION */
 
 	if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
-		warn("unable to open %s", pf_device);
+		ERROR("unable to open %s", pf_device);
 		goto error;
 	}
 
 	pr.rule.action = PF_PASS;
 	if (ioctl(pfrulesdev, DIOCGETRULES, &pr)) {
-		warn("DIOCGETRULES2: %i", pfrulesdev);
+		ERROR("DIOCGETRULES2: %i", pfrulesdev);
 		goto error;
 	}
 	close(pfrulesdev);
@@ -151,17 +151,17 @@ pfrules_read(void)
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
 		if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
-			warn("unable to open %s", pf_device);
+			ERROR("unable to open %s", pf_device);
 			goto error;
 		}
 		if (ioctl(pfrulesdev, DIOCGETRULE, &pr)) {
-			warn("DIOCGETRULE2: %i", pfrulesdev);
+			ERROR("DIOCGETRULE2: %i", pfrulesdev);
 			goto error;
 		}
 		rule = pr.rule;
 
 		if (get_rulestring(&pr, rulestring) == -1) {
-			warn("get_rulestring failed");
+			ERROR("get_rulestring failed");
 			goto error;
 		}
 #ifndef TEST
@@ -202,12 +202,12 @@ pfrules_read(void)
 #if VERSION < 46
 	for (i = 0; i < 3; i++) {
 		if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
-			warn("unable to open %s", pf_device);
+			ERROR("unable to open %s", pf_device);
 			goto error;
 		}
 		pr.rule.action = nattype[i];
 		if (ioctl(pfrulesdev, DIOCGETRULES, &pr)) {
-			warn("DIOCGETRULES3: %i", pfrulesdev);
+			ERROR("DIOCGETRULES3: %i", pfrulesdev);
 			goto error;
 		}
 		close(pfrulesdev);
@@ -215,21 +215,21 @@ pfrules_read(void)
 		for (nr = 0; nr < mnr; ++nr) {
 			pr.nr = nr;
 			if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
-				warn("unable to open %s", pf_device);
+				ERROR("unable to open %s", pf_device);
 				goto error;
 			}
 			if (ioctl(pfrulesdev, DIOCGETRULE, &pr)) {
-				warn("DIOCGETRULE3: %i", pfrulesdev);
+				ERROR("DIOCGETRULE3: %i", pfrulesdev);
 				goto error;
 			}
 			if (pfctl_get_pool(pfrulesdev, &pr.rule.rpool, nr,
 			    pr.ticket, nattype[i], anchorname) != 0) {
-				warn("pfctl_get_pool failed");
+				ERROR("pfctl_get_pool failed");
 				goto error;
 			}
 			rule = pr.rule;
 			if (get_rulestring(&pr, rulestring) == -1) {
-				warn("get_rulestring failed");
+				ERROR("get_rulestring failed");
 				goto error;
 			}
 			pfctl_clear_pool(&pr.rule.rpool);
@@ -297,26 +297,29 @@ get_rulestring(struct pfioc_rule *pr, char *rulestring)
 			unlink(sfn);
 			close(fd);
 		}
-		warn("mkstemp failed: %s", sfn);
+		ERROR("mkstemp failed: %s", sfn);
 		return (-1);
 	}
 	if (freopen(sfn, "w", stdout) == NULL) {
 		fclose(sfp);
 		remove(sfn);
-		warn("freopen1 failed");
+		ERROR("freopen2 failed");
 		return (-1);
 	}
 	print_rule(&pr->rule, pr->anchor_call, 0);
-	if (freopen("/dev/tty", "w", stdout) == NULL) {
+	/*
+	 * XXX: STDOUT is /dev/null in daemon-mode
+	 */
+	if (freopen("/dev/null", "w", stdout) == NULL) {
 		fclose(sfp);
 		remove(sfn);
-		warn("freopen2 failed");
+		ERROR("freopen3 failed");
 		return (-1);
 	}
 	if (fgets(rulestring, 256, sfp) == NULL) {
 		fclose(sfp);
 		remove(sfn);
-		warn("fgets failed for %s", sfn);
+		ERROR("fgets failed for %s", sfn);
 		return (-1);
 	}
 
