@@ -25,19 +25,23 @@ static int	get_rulestring(struct pfioc_rule *, char *);
 static void	submit_counter(const char *, const char *, counter_t, int);
 #endif
 
+int	pfrulesdev = -1;
+
 int
 pfrules_init(void)
 {
 	struct pf_status	status;
 
-	if ((dev = open(PF_SOCKET, O_RDONLY)) == -1) {
+	if ((pfrulesdev = open(PF_SOCKET, O_RDONLY)) == -1) {
+		warn("unable to open %s", PF_SOCKET);
 		return (-1);
 	}
-	if (ioctl(dev, DIOCGETSTATUS, &status) == -1) {
+	if (ioctl(pfrulesdev, DIOCGETSTATUS, &status) == -1) {
+		warn("DIOCGETSTATUS: %i", pfrulesdev);
 		return (-1);
 	}
 
-	close(dev);
+	close(pfrulesdev);
 	if (!status.running)
 		return (-1);
 
@@ -60,34 +64,37 @@ pfrules_read(void)
 
 	memset(anchorname, 0, sizeof(anchorname));
 
-	if ((path = calloc(1, MAXPATHLEN)) == NULL)
+	if ((path = calloc(1, MAXPATHLEN)) == NULL) {
+		warn("calloc path failed");
 		return (-1);
+	}
 
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, path, sizeof(pr.anchor));
 
-	if ((dev = open(PF_SOCKET, O_RDONLY)) == -1) {
-		return (-1);
+	if ((pfrulesdev = open(PF_SOCKET, O_RDONLY)) == -1) {
+		warn("unable to open %s", PF_SOCKET);
+		goto error;
 	}
 
 #if VERSION < 46
 	pr.rule.action = PF_SCRUB;
-	if (ioctl(dev, DIOCGETRULES, &pr)) {
-		warn("DIOCGETRULES1: %i", dev);
-		return (-1);
+	if (ioctl(pfrulesdev, DIOCGETRULES, &pr)) {
+		warn("DIOCGETRULES1: %i", pfrulesdev);
+		goto error;
 	}
 
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
-		if (ioctl(dev, DIOCGETRULE, &pr)) {
-			warn("DIOCGETRULE1: %i", dev);
-			return (-1);
+		if (ioctl(pfrulesdev, DIOCGETRULE, &pr)) {
+			warn("DIOCGETRULE1: %i", pfrulesdev);
+			goto error;
 		}
 		rule = pr.rule;
 		if (get_rulestring(&pr, rulestring) == -1) {
 			warn("get_rulestring failed");
-			return (-1);
+			goto error;
 		}
 #ifndef TEST
 		submit_counter("states_cur", rulestring,
@@ -122,35 +129,37 @@ pfrules_read(void)
 		printf("\n");
 #endif /* TEST */
 	}
-	close(dev);
+	close(pfrulesdev);
 #endif /* VERSION */
 
-	if ((dev = open(PF_SOCKET, O_RDONLY)) == -1) {
-		return (-1);
+	if ((pfrulesdev = open(PF_SOCKET, O_RDONLY)) == -1) {
+		warn("unable to open %s", PF_SOCKET);
+		goto error;
 	}
 
 	pr.rule.action = PF_PASS;
-	if (ioctl(dev, DIOCGETRULES, &pr)) {
-		warn("DIOCGETRULES2: %i", dev);
-		return (-1);
+	if (ioctl(pfrulesdev, DIOCGETRULES, &pr)) {
+		warn("DIOCGETRULES2: %i", pfrulesdev);
+		goto error;
 	}
-	close(dev);
+	close(pfrulesdev);
 
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
-		if ((dev = open(PF_SOCKET, O_RDONLY)) == -1) {
-			return (-1);
+		if ((pfrulesdev = open(PF_SOCKET, O_RDONLY)) == -1) {
+			warn("unable to open %s", PF_SOCKET);
+			goto error;
 		}
-		if (ioctl(dev, DIOCGETRULE, &pr)) {
-			warn("DIOCGETRULE2: %i", dev);
-			return (-1);
+		if (ioctl(pfrulesdev, DIOCGETRULE, &pr)) {
+			warn("DIOCGETRULE2: %i", pfrulesdev);
+			goto error;
 		}
 		rule = pr.rule;
 
 		if (get_rulestring(&pr, rulestring) == -1) {
 			warn("get_rulestring failed");
-			return (-1);
+			goto error;
 		}
 #ifndef TEST
 		submit_counter("states_cur", rulestring,
@@ -184,37 +193,41 @@ pfrules_read(void)
 		    (unsigned long long)rule.bytes[1]);
 		printf("\n");
 #endif /* TEST */
-		close(dev);
+		close(pfrulesdev);
 	}
 
 #if VERSION < 46
 	for (i = 0; i < 3; i++) {
-		if ((dev = open(PF_SOCKET, O_RDONLY)) == -1) {
-			return (-1);
+		if ((pfrulesdev = open(PF_SOCKET, O_RDONLY)) == -1) {
+			warn("unable to open %s", PF_SOCKET);
+			goto error;
 		}
 		pr.rule.action = nattype[i];
-		if (ioctl(dev, DIOCGETRULES, &pr)) {
-			warn("DIOCGETRULES3: %i", dev);
-			return (-1);
+		if (ioctl(pfrulesdev, DIOCGETRULES, &pr)) {
+			warn("DIOCGETRULES3: %i", pfrulesdev);
+			goto error;
 		}
-		close(dev);
+		close(pfrulesdev);
 		mnr = pr.nr;
 		for (nr = 0; nr < mnr; ++nr) {
 			pr.nr = nr;
-			if ((dev = open(PF_SOCKET, O_RDONLY)) == -1) {
-				return (-1);
+			if ((pfrulesdev = open(PF_SOCKET, O_RDONLY)) == -1) {
+				warn("unable to open %s", PF_SOCKET);
+				goto error;
 			}
-			if (ioctl(dev, DIOCGETRULE, &pr)) {
-				warn("DIOCGETRULE3: %i", dev);
-				return (-1);
+			if (ioctl(pfrulesdev, DIOCGETRULE, &pr)) {
+				warn("DIOCGETRULE3: %i", pfrulesdev);
+				goto error;
 			}
-			if (pfctl_get_pool(dev, &pr.rule.rpool, nr,
-			    pr.ticket, nattype[i], anchorname) != 0)
-				return (-1);
+			if (pfctl_get_pool(pfrulesdev, &pr.rule.rpool, nr,
+			    pr.ticket, nattype[i], anchorname) != 0) {
+				warn("pfctl_get_pool failed");
+				goto error;
+			}
 			rule = pr.rule;
 			if (get_rulestring(&pr, rulestring) == -1) {
 				warn("get_rulestring failed");
-				return (-1);
+				goto error;
 			}
 			pfctl_clear_pool(&pr.rule.rpool);
 #ifndef TEST
@@ -249,11 +262,17 @@ pfrules_read(void)
 			    (unsigned long long)rule.bytes[1]);
 			printf("\n");
 #endif /* TEST */
-		close(dev);
+		close(pfrulesdev);
 		}
 	}
 #endif /* VERSION */
+	free(path);
 	return (0);
+error:
+	if (pfrulesdev != -1)
+		close(pfrulesdev);
+	free(path);
+	return (-1);
 }
 
 int
@@ -263,6 +282,11 @@ get_rulestring(struct pfioc_rule *pr, char *rulestring)
 	FILE		 *sfp = NULL;
 	int		 fd;
 
+	/*
+	 * XXX: can we do this in RAM?
+	 *      causes Problems on small FW appliance with
+	 *      very slow SD as HDD.
+	 */
 	strlcpy(sfn, "/tmp/pfutils.XXXXXXXXXX", sizeof(sfn));
 	if ((fd = mkstemp(sfn)) == -1 ||
 	    (sfp = fdopen(fd, "w+")) == NULL) {
