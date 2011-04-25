@@ -311,7 +311,13 @@ get_rulestring(struct pfioc_rule *pr, char *rulestring)
 		remove(sfn);
 		return (-1);
 	}
-	fgets(rulestring, 256, sfp);
+	if (fgets(rulestring, 256, sfp) == NULL) {
+		fclose(sfp);
+		remove(sfn);
+		warn("fgets failed for %s", sfn);
+		return (-1);
+	}
+
 	fclose(sfp);
 	remove(sfn);
 
