@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <err.h>
+#include <pwd.h>
 
 #ifndef TEST
 #include "collectd.h"
