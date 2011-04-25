@@ -303,7 +303,7 @@ get_rulestring(struct pfioc_rule *pr, char *rulestring)
 	if (freopen(sfn, "w", stdout) == NULL) {
 		fclose(sfp);
 		remove(sfn);
-		ERROR("freopen2 failed");
+		ERROR("freopen1 failed");
 		return (-1);
 	}
 	print_rule(&pr->rule, pr->anchor_call, 0);
@@ -313,7 +313,7 @@ get_rulestring(struct pfioc_rule *pr, char *rulestring)
 	if (freopen("/dev/null", "w", stdout) == NULL) {
 		fclose(sfp);
 		remove(sfn);
-		ERROR("freopen3 failed");
+		ERROR("freopen2 failed");
 		return (-1);
 	}
 	if (fgets(rulestring, 256, sfp) == NULL) {
