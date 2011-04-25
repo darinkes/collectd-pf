@@ -20,7 +20,7 @@
 
 static int	pfrules_init(void);
 static int	pfrules_read(void);
-static void	get_rulestring(struct pfioc_rule *, const char *);
+static int	get_rulestring(struct pfioc_rule *, const char *);
 #ifndef TEST
 static void	submit_counter(const char *, const char *, counter_t, int);
 #endif
@@ -85,7 +85,10 @@ pfrules_read(void)
 			return (-1);
 		}
 		rule = pr.rule;
-		get_rulestring(&pr, rulestring);
+		if (get_rulestring(&pr, rulestring) == -1) {
+			warn("get_rulestring failed");
+			return (-1);
+		}
 #ifndef TEST
 		submit_counter("states_cur", rulestring,
 		    rule.states_cur, 1);
@@ -145,7 +148,10 @@ pfrules_read(void)
 		}
 		rule = pr.rule;
 
-		get_rulestring(&pr, rulestring);
+		if (get_rulestring(&pr, rulestring) == -1) {
+			warn("get_rulestring failed");
+			return (-1);
+		}
 #ifndef TEST
 		submit_counter("states_cur", rulestring,
 		    rule.states_cur, 1);
@@ -206,7 +212,10 @@ pfrules_read(void)
 			    pr.ticket, nattype[i], anchorname) != 0)
 				return (-1);
 			rule = pr.rule;
-			get_rulestring(&pr, rulestring);
+			if (get_rulestring(&pr, rulestring) == -1) {
+				warn("get_rulestring failed");
+				return (-1);
+			}
 			pfctl_clear_pool(&pr.rule.rpool);
 #ifndef TEST
 			submit_counter("states_cur", rulestring,
@@ -247,7 +256,7 @@ pfrules_read(void)
 	return (0);
 }
 
-void
+int
 get_rulestring(struct pfioc_rule *pr, const char *rulestring)
 {
 	char		 sfn[23];
@@ -262,9 +271,11 @@ get_rulestring(struct pfioc_rule *pr, const char *rulestring)
 			close(fd);
 		}
 	}
-	freopen(sfn, "w", stdout);
+	if (!freopen(sfn, "w", stdout))
+		return (-1);
 	print_rule(&pr->rule, pr->anchor_call, 0);
-	freopen("/dev/tty", "w", stdout);
+	if (!freopen("/dev/tty", "w", stdout))
+		return (-1);
 	fgets((char *)rulestring, 256, sfp);
 	fclose(sfp);
 	remove(sfn);
@@ -291,7 +302,7 @@ get_rulestring(struct pfioc_rule *pr, const char *rulestring)
 	}
 	*p2 = 0;
 
-	return;
+	return 0;
 }
 
 #ifndef TEST
