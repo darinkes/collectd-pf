@@ -1,3 +1,7 @@
+collectd-pf is a plugin for the system statistics collection daemon - collectd.
+It can collect various counters of the PF itself and also useful informations
+about each rule of your ruleset.
+
 = Status
 	Works for supported versions, but needs some serious testing.
 
@@ -33,6 +37,9 @@
 	      So collectd has to be started as root.
 
 = GUIs
+	If you have a large ruleset you should use collection4 as GUI,
+	since Collectd-Web has some serious problems with the amount
+	of graphs.
 
 == Collectd-Web
 	See patch 0001-add-defs-for-pf-plugin.patch.
