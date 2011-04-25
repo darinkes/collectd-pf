@@ -18,26 +18,28 @@
 #include "pfcommon.h"
 #include "pfutils.h"
 
-static int	pfrules_init(void);
-static int	pfrules_read(void);
-static int	get_rulestring(struct pfioc_rule *, char *);
+static int	 pfrules_init(void);
+static int	 pfrules_read(void);
+static int	 get_rulestring(struct pfioc_rule *, char *);
 #ifndef TEST
-static void	submit_counter(const char *, const char *, counter_t, int);
+static void	 submit_counter(const char *, const char *, counter_t, int);
 #endif
 
-int	pfrulesdev = -1;
+char		*pf_device = "/dev/pf";
 
 int
 pfrules_init(void)
 {
 	struct pf_status	status;
+	int			pfrulesdev = -1;
 
-	if ((pfrulesdev = open(PF_SOCKET, O_RDONLY)) == -1) {
-		warn("unable to open %s", PF_SOCKET);
+	if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
+		warn("unable to open %s", pf_device);
 		return (-1);
 	}
 	if (ioctl(pfrulesdev, DIOCGETSTATUS, &status) == -1) {
 		warn("DIOCGETSTATUS: %i", pfrulesdev);
+		close(pfrulesdev);
 		return (-1);
 	}
 
@@ -61,6 +63,7 @@ pfrules_read(void)
 	static int		 nattype[3] = { PF_NAT, PF_RDR, PF_BINAT };
 #endif
 	char			 anchorname[MAXPATHLEN];
+	int			 pfrulesdev = -1;
 
 	memset(anchorname, 0, sizeof(anchorname));
 
@@ -72,8 +75,8 @@ pfrules_read(void)
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, path, sizeof(pr.anchor));
 
-	if ((pfrulesdev = open(PF_SOCKET, O_RDONLY)) == -1) {
-		warn("unable to open %s", PF_SOCKET);
+	if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
+		warn("unable to open %s", pf_device);
 		goto error;
 	}
 
@@ -132,8 +135,8 @@ pfrules_read(void)
 	close(pfrulesdev);
 #endif /* VERSION */
 
-	if ((pfrulesdev = open(PF_SOCKET, O_RDONLY)) == -1) {
-		warn("unable to open %s", PF_SOCKET);
+	if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
+		warn("unable to open %s", pf_device);
 		goto error;
 	}
 
@@ -147,8 +150,8 @@ pfrules_read(void)
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
-		if ((pfrulesdev = open(PF_SOCKET, O_RDONLY)) == -1) {
-			warn("unable to open %s", PF_SOCKET);
+		if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
+			warn("unable to open %s", pf_device);
 			goto error;
 		}
 		if (ioctl(pfrulesdev, DIOCGETRULE, &pr)) {
@@ -198,8 +201,8 @@ pfrules_read(void)
 
 #if VERSION < 46
 	for (i = 0; i < 3; i++) {
-		if ((pfrulesdev = open(PF_SOCKET, O_RDONLY)) == -1) {
-			warn("unable to open %s", PF_SOCKET);
+		if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
+			warn("unable to open %s", pf_device);
 			goto error;
 		}
 		pr.rule.action = nattype[i];
@@ -211,8 +214,8 @@ pfrules_read(void)
 		mnr = pr.nr;
 		for (nr = 0; nr < mnr; ++nr) {
 			pr.nr = nr;
-			if ((pfrulesdev = open(PF_SOCKET, O_RDONLY)) == -1) {
-				warn("unable to open %s", PF_SOCKET);
+			if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
+				warn("unable to open %s", pf_device);
 				goto error;
 			}
 			if (ioctl(pfrulesdev, DIOCGETRULE, &pr)) {

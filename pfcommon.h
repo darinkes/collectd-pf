@@ -40,5 +40,3 @@
 #else
 typedef u_int64_t	counter_t;
 #endif
-
-#define PF_SOCKET "/dev/pf"
