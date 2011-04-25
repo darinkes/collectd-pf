@@ -75,12 +75,12 @@ pfrules_read(void)
 	memset(&pr, 0, sizeof(pr));
 	memcpy(pr.anchor, path, sizeof(pr.anchor));
 
+#if VERSION < 46
 	if ((pfrulesdev = open(pf_device, O_RDONLY)) == -1) {
 		warn("unable to open %s", pf_device);
 		goto error;
 	}
 
-#if VERSION < 46
 	pr.rule.action = PF_SCRUB;
 	if (ioctl(pfrulesdev, DIOCGETRULES, &pr)) {
 		warn("DIOCGETRULES1: %i", pfrulesdev);
