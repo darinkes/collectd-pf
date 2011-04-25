@@ -20,7 +20,7 @@
 
 static int	pfrules_init(void);
 static int	pfrules_read(void);
-static int	get_rulestring(struct pfioc_rule *, const char *);
+static int	get_rulestring(struct pfioc_rule *, char *);
 #ifndef TEST
 static void	submit_counter(const char *, const char *, counter_t, int);
 #endif
@@ -257,9 +257,9 @@ pfrules_read(void)
 }
 
 int
-get_rulestring(struct pfioc_rule *pr, const char *rulestring)
+get_rulestring(struct pfioc_rule *pr, char *rulestring)
 {
-	char		 sfn[23];
+	char		 sfn[24];
 	FILE		 *sfp = NULL;
 	int		 fd;
 
@@ -270,18 +270,26 @@ get_rulestring(struct pfioc_rule *pr, const char *rulestring)
 			unlink(sfn);
 			close(fd);
 		}
+		warn("mkstemp failed: %s", sfn);
+		return (-1);
 	}
-	if (!freopen(sfn, "w", stdout))
+	if (!freopen(sfn, "w", stdout)) {
+		fclose(sfp);
+		remove(sfn);
 		return (-1);
+	}
 	print_rule(&pr->rule, pr->anchor_call, 0);
-	if (!freopen("/dev/tty", "w", stdout))
+	if (!freopen("/dev/tty", "w", stdout)) {
+		fclose(sfp);
+		remove(sfn);
 		return (-1);
-	fgets((char *)rulestring, 256, sfp);
+	}
+	fgets(rulestring, 256, sfp);
 	fclose(sfp);
 	remove(sfn);
 
-	char *p1 = (char *)rulestring;
-	char *p2 = (char *)rulestring;
+	char *p1 = rulestring;
+	char *p2 = rulestring;
 	while(*p1 != 0) {
 		if(*p1 == '!') {
 			*p2++ = *p1++;
