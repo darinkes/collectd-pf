@@ -50,3 +50,11 @@ about each rule of your ruleset.
 	See patch 0001-add-pf-graphs-to-collection4.patch
 	Add these lines to your collection.conf or apply
 	the patch manually with git.
+
+= ToDo
+	1.) The limit of DATA_MAX_NAME_LEN might cause problems
+	    if rules just differ in the last chars after the
+	    64th char.
+	2.) Get the output of print_rule should not be stored in
+	    the filesystem, else on SD-Cards strange things happen.
+	3.) ioctl sometimes fails on SD-Cards
