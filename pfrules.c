@@ -20,7 +20,7 @@
 
 static int	 pfrules_init(void);
 static int	 pfrules_read(void);
-static int	 get_rulestring(struct pfioc_rule *, char *);
+static void	 get_rulestring(struct pfioc_rule *, char *);
 #ifndef TEST
 static void	 submit_counter(const char *, const char *, counter_t, int);
 #endif
@@ -95,10 +95,7 @@ pfrules_read(void)
 			goto error;
 		}
 		rule = pr.rule;
-		if (get_rulestring(&pr, rulestring) == -1) {
-			ERROR("get_rulestring failed");
-			goto error;
-		}
+		get_rulestring(&pr, rulestring);
 #ifndef TEST
 		submit_counter("states_cur", rulestring,
 		    rule.states_cur, 1);
@@ -160,10 +157,7 @@ pfrules_read(void)
 		}
 		rule = pr.rule;
 
-		if (get_rulestring(&pr, rulestring) == -1) {
-			ERROR("get_rulestring failed");
-			goto error;
-		}
+		get_rulestring(&pr, rulestring);
 #ifndef TEST
 		submit_counter("states_cur", rulestring,
 		    rule.states_cur, 1);
@@ -228,10 +222,7 @@ pfrules_read(void)
 				goto error;
 			}
 			rule = pr.rule;
-			if (get_rulestring(&pr, rulestring) == -1) {
-				ERROR("get_rulestring failed");
-				goto error;
-			}
+			get_rulestring(&pr, rulestring);
 			pfctl_clear_pool(&pr.rule.rpool);
 #ifndef TEST
 			submit_counter("states_cur", rulestring,
@@ -278,7 +269,7 @@ error:
 	return (-1);
 }
 
-int
+void
 get_rulestring(struct pfioc_rule *pr, char *rulestring)
 {
 	/*
@@ -308,8 +299,6 @@ get_rulestring(struct pfioc_rule *pr, char *rulestring)
 		}
 	}
 	*p2 = 0;
-
-	return 0;
 }
 
 #ifndef TEST
