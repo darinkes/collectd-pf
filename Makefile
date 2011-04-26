@@ -33,5 +33,5 @@ pfrulescmd: pfutils.h pfrules.c pfutils-${GENERATION}.c
 	${CC} -DTEST ${COPTS} -o pfutils.o -c pfutils-${GENERATION}.c
 	${CC} -o pfrulescmd pfrules.o pfutils.o
 
-pfutils.h:
+pfutils.h: pfutils-${GENERATION}.h
 	cp pfutils-${GENERATION}.h pfutils.h
