@@ -39,4 +39,5 @@
 #include "configfile.h"
 #else
 typedef u_int64_t	counter_t;
+#define ERROR(...)	printf(__VA_ARGS__)
 #endif
