@@ -55,13 +55,4 @@ about each rule of your ruleset.
 	1.) The limit of DATA_MAX_NAME_LEN might cause problems
 	    if rules just differ in the last chars after the
 	    64th char.
-	2.) Get the output of print_rule should not be stored in
-	    the filesystem, else on SD-Cards strange things happen.
-	3.) ioctl sometimes fails on SD-Cards
-
-	To avoid 2.) and 3.) you should create a mfs for tmp by adding
-	    swap /tmp mfs rw,nodev,nosuid,-s=153600 0 0
-	to your /etc/fstab and run
-	    # mount -a
-	A mfs /tmp partition is much faster than on a SD-Card.
-	On normal HDDs no issues have been spotted till now.
+	2.) ioctl sometimes fails on SD-Cards
