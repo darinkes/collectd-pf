@@ -37,7 +37,7 @@ pfrules_init(void)
 		ERROR("unable to open %s", pf_device);
 		return (-1);
 	}
-	if (ioctl(pfrulesdev, DIOCGETSTATUS, &status) == -1) {
+	if (ioctl(pfrulesdev, DIOCGETSTATUS, &status)) {
 		ERROR("DIOCGETSTATUS: %i", pfrulesdev);
 		close(pfrulesdev);
 		return (-1);
@@ -281,50 +281,7 @@ error:
 int
 get_rulestring(struct pfioc_rule *pr, char *rulestring)
 {
-	char		 sfn[24];
-	FILE		 *sfp = NULL;
-	int		 fd;
-
-	/*
-	 * XXX: can we do this in RAM?
-	 *      causes Problems on small FW appliance with
-	 *      very slow SD as HDD.
-	 */
-	strlcpy(sfn, "/tmp/pfutils.XXXXXXXXXX", sizeof(sfn));
-	if ((fd = mkstemp(sfn)) == -1 ||
-	    (sfp = fdopen(fd, "w+")) == NULL) {
-		if (fd != -1) {
-			unlink(sfn);
-			close(fd);
-		}
-		ERROR("mkstemp failed: %s", sfn);
-		return (-1);
-	}
-	if (freopen(sfn, "w", stdout) == NULL) {
-		fclose(sfp);
-		remove(sfn);
-		ERROR("freopen1 failed");
-		return (-1);
-	}
-	print_rule(&pr->rule, pr->anchor_call, 0);
-	/*
-	 * XXX: STDOUT is /dev/null in daemon-mode
-	 */
-	if (freopen("/dev/null", "w", stdout) == NULL) {
-		fclose(sfp);
-		remove(sfn);
-		ERROR("freopen2 failed");
-		return (-1);
-	}
-	if (fgets(rulestring, 256, sfp) == NULL) {
-		fclose(sfp);
-		remove(sfn);
-		ERROR("fgets failed for %s", sfn);
-		return (-1);
-	}
-
-	fclose(sfp);
-	remove(sfn);
+	print_rule(&pr->rule, pr->anchor_call, 0, rulestring);
 
 	char *p1 = rulestring;
 	char *p2 = rulestring;
