@@ -281,6 +281,10 @@ error:
 int
 get_rulestring(struct pfioc_rule *pr, char *rulestring)
 {
+	/*
+	 * clear the given char array
+	 */
+	memset(rulestring, 0, MAXRULESTRING);
 	print_rule(&pr->rule, pr->anchor_call, 0, rulestring);
 
 	char *p1 = rulestring;

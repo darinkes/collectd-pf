@@ -8,3 +8,7 @@ void	 pfctl_clear_pool(struct pf_pool *);
 #define PF_NAT_PROXY_PORT_LOW	50001
 #define PF_NAT_PROXY_PORT_HIGH	65535
 
+#define MAXRULESTRING	256
+#define CURRENTPOS	rulestring + strlen(rulestring)
+#define CURRENTSIZE	MAXRULESTRING - strlen(rulestring)
+#define RULEPRINT(...)	snprintf(CURRENTPOS, CURRENTSIZE, __VA_ARGS__)

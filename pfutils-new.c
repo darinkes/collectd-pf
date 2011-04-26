@@ -27,10 +27,12 @@
 
 void		 print_fromto(struct pf_rule_addr *, pf_osfp_t,
 		    struct pf_rule_addr *, u_int8_t, u_int8_t, int, char *);
-void		 print_ugid (u_int8_t, unsigned, unsigned, const char *, unsigned, char *);
+void		 print_ugid (u_int8_t, unsigned, unsigned, const char *,
+		   unsigned, char *);
 void		 print_flags (u_int8_t, char *);
 void		 print_addr(struct pf_addr_wrap *, sa_family_t, int, char *);
-void		 print_port (u_int8_t, u_int16_t, u_int16_t, const char *, char *);
+void		 print_port (u_int8_t, u_int16_t, u_int16_t, const char *,
+		    char *);
 char		*pfctl_lookup_fingerprint(pf_osfp_t, char *, size_t);
 void		 print_op (u_int8_t, const char *, const char *, char *);
 int		 unmask(struct pf_addr *, sa_family_t);
@@ -202,7 +204,8 @@ const char *tcpflags = "FSRPAUEW";
 enum { PF_POOL_ROUTE, PF_POOL_NAT, PF_POOL_RDR };
 
 void
-print_rule(struct pf_rule *r, const char *anchor_call, int verbose, char *rulestring)
+print_rule(struct pf_rule *r, const char *anchor_call, int verbose,
+    char *rulestring)
 {
 	static const char *actiontypes[] = { "pass", "block", "scrub",
 	    "no scrub", "nat", "no nat", "binat", "no binat", "rdr", "no rdr",
@@ -214,25 +217,24 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose, char *rulest
 	char	*p;
 
 	if (r->action > PF_MATCH)
-		snprintf(rulestring, 256, "action(%d)", r->action);
+		RULEPRINT("action(%d)", r->action);
 	else if (anchor_call[0]) {
 		p = strrchr(anchor_call, '/');
 		if (p ? p[1] == '_' : anchor_call[0] == '_')
-			snprintf(rulestring, 256, "%s", anchortypes[r->action]);
+			RULEPRINT("%s", anchortypes[r->action]);
 		else
-			snprintf(rulestring, 256,
-			    "%s \"%s\"", anchortypes[r->action],
+			RULEPRINT("%s \"%s\"", anchortypes[r->action],
 			    anchor_call);
 	} else
-		snprintf(rulestring, 256, "%s", actiontypes[r->action]);
+		RULEPRINT("%s", actiontypes[r->action]);
 	if (r->action == PF_DROP) {
 		if (r->rule_flag & PFRULE_RETURN)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " return");
+			RULEPRINT(" return");
 		else if (r->rule_flag & PFRULE_RETURNRST) {
 			if (!r->return_ttl)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " return-rst");
+				RULEPRINT(" return-rst");
 			else
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " return-rst(ttl %d)", r->return_ttl);
+				RULEPRINT(" return-rst(ttl %d)", r->return_ttl);
 		} else if (r->rule_flag & PFRULE_RETURNICMP) {
 			const struct icmpcodeent	*ic, *ic6;
 
@@ -243,89 +245,90 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose, char *rulest
 
 			switch (r->af) {
 			case AF_INET:
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " return-icmp");
+				RULEPRINT(" return-icmp");
 				if (ic == NULL)
-					snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "(%u)", r->return_icmp & 255);
+					RULEPRINT("(%u)", r->return_icmp & 255);
 				else
-					snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "(%s)", ic->name);
+					RULEPRINT("(%s)", ic->name);
 				break;
 			case AF_INET6:
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " return-icmp6");
+				RULEPRINT(" return-icmp6");
 				if (ic6 == NULL)
-					snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "(%u)", r->return_icmp6 & 255);
+					RULEPRINT("(%u)",
+					    r->return_icmp6 & 255);
 				else
-					snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "(%s)", ic6->name);
+					RULEPRINT("(%s)", ic6->name);
 				break;
 			default:
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " return-icmp");
+				RULEPRINT(" return-icmp");
 				if (ic == NULL)
-					snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "(%u, ", r->return_icmp & 255);
+					RULEPRINT("(%u, ",
+					    r->return_icmp & 255);
 				else
-					snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "(%s, ", ic->name);
+					RULEPRINT("(%s, ", ic->name);
 				if (ic6 == NULL)
-					snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "%u)", r->return_icmp6 & 255);
+					RULEPRINT("%u)", r->return_icmp6 & 255);
 				else
-					snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "%s)", ic6->name);
+					RULEPRINT("%s)", ic6->name);
 				break;
 			}
 		} else
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " drop");
+			RULEPRINT(" drop");
 	}
 	if (r->direction == PF_IN)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " in");
+		RULEPRINT(" in");
 	else if (r->direction == PF_OUT)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " out");
+		RULEPRINT(" out");
 	if (r->log) {
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " log");
+		RULEPRINT(" log");
 		if (r->log & ~PF_LOG || r->logif) {
 			int count = 0;
 
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " (");
+			RULEPRINT(" (");
 			if (r->log & PF_LOG_ALL)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "%sall", count++ ? ", " : "");
+				RULEPRINT("%sall", count++ ? ", " : "");
 			if (r->log & PF_LOG_MATCHES)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "%smatches", count++ ? ", " : "");
+				RULEPRINT("%smatches", count++ ? ", " : "");
 			if (r->log & PF_LOG_SOCKET_LOOKUP)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "%suser", count++ ? ", " : "");
+				RULEPRINT("%suser", count++ ? ", " : "");
 			if (r->logif)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring),
-				    "%sto pflog%u", count++ ? ", " : "",
+				RULEPRINT("%sto pflog%u", count++ ? ", " : "",
 				    r->logif);
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ")");
+			RULEPRINT(")");
 		}
 	}
 	if (r->quick)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " quick");
+		RULEPRINT(" quick");
 	if (r->ifname[0]) {
 		if (r->ifnot)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " on ! %s", r->ifname);
+			RULEPRINT(" on ! %s", r->ifname);
 		else
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " on %s", r->ifname);
+			RULEPRINT(" on %s", r->ifname);
 	}
 	if (r->onrdomain >= 0) {
 		if (r->ifnot)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " on ! rdomain %i", r->onrdomain);
+			RULEPRINT(" on ! rdomain %i", r->onrdomain);
 		else
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " on rdomain %i", r->onrdomain);
+			RULEPRINT(" on rdomain %i", r->onrdomain);
 	}
 	if (r->af) {
 		if (r->af == AF_INET)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " inet");
+			RULEPRINT(" inet");
 		else
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " inet6");
+			RULEPRINT(" inet6");
 	}
 	if (r->proto) {
 		struct protoent	*p;
 
 		if ((p = getprotobynumber(r->proto)) != NULL)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " proto %s", p->p_name);
+			RULEPRINT(" proto %s", p->p_name);
 		else
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " proto %u", r->proto);
+			RULEPRINT(" proto %u", r->proto);
 	}
 	print_fromto(&r->src, r->os_fingerprint, &r->dst, r->af, r->proto,
 	    verbose, rulestring);
 	if (r->rcv_ifname[0])
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " received-on %s", r->rcv_ifname);
+		RULEPRINT(" received-on %s", r->rcv_ifname);
 	if (r->uid.op)
 		print_ugid(r->uid.op, r->uid.uid[0], r->uid.uid[1], "user",
 		    UID_MAX, rulestring);
@@ -333,47 +336,47 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose, char *rulest
 		print_ugid(r->gid.op, r->gid.gid[0], r->gid.gid[1], "group",
 		    GID_MAX, rulestring);
 	if (r->flags || r->flagset) {
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " flags ");
+		RULEPRINT(" flags ");
 		print_flags(r->flags, rulestring);
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "/");
+		RULEPRINT("/");
 		print_flags(r->flagset, rulestring);
 	} else if ((r->action == PF_PASS || r->action == PF_MATCH) &&
 	    (!r->proto || r->proto == IPPROTO_TCP) &&
 	    !(r->rule_flag & PFRULE_FRAGMENT) &&
 	    !anchor_call[0] && r->keep_state)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " flags any");
+		RULEPRINT(" flags any");
 	if (r->type) {
 		const struct icmptypeent	*it;
 
 		it = geticmptypebynumber(r->type-1, r->af);
 		if (r->af != AF_INET6)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " icmp-type");
+			RULEPRINT(" icmp-type");
 		else
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " icmp6-type");
+			RULEPRINT(" icmp6-type");
 		if (it != NULL)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " %s", it->name);
+			RULEPRINT(" %s", it->name);
 		else
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " %u", r->type-1);
+			RULEPRINT(" %u", r->type-1);
 		if (r->code) {
 			const struct icmpcodeent	*ic;
 
 			ic = geticmpcodebynumber(r->type-1, r->code-1, r->af);
 			if (ic != NULL)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " code %s", ic->name);
+				RULEPRINT(" code %s", ic->name);
 			else
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " code %u", r->code-1);
+				RULEPRINT(" code %u", r->code-1);
 		}
 	}
 	if (r->tos)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " tos 0x%2.2x", r->tos);
+		RULEPRINT(" tos 0x%2.2x", r->tos);
 	if (!r->keep_state && r->action == PF_PASS && !anchor_call[0])
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " no state");
+		RULEPRINT(" no state");
 	else if (r->keep_state == PF_STATE_NORMAL)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " keep state");
+		RULEPRINT(" keep state");
 	else if (r->keep_state == PF_STATE_MODULATE)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " modulate state");
+		RULEPRINT(" modulate state");
 	else if (r->keep_state == PF_STATE_SYNPROXY)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " synproxy state");
+		RULEPRINT(" synproxy state");
 	if (r->prob) {
 		char	buf[20];
 
@@ -387,7 +390,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose, char *rulest
 				break;
 			}
 		}
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " probability %s%%", buf);
+		RULEPRINT(" probability %s%%", buf);
 	}
 	opts = 0;
 	if (r->max_states || r->max_src_nodes || r->max_src_states)
@@ -406,79 +409,78 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose, char *rulest
 		if (r->timeout[i])
 			opts = 1;
 	if (opts) {
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " (");
+		RULEPRINT(" (");
 		if (r->max_states) {
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "max %u", r->max_states);
+			RULEPRINT("max %u", r->max_states);
 			opts = 0;
 		}
 		if (r->rule_flag & PFRULE_NOSYNC) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ", ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "no-sync");
+				RULEPRINT(", ");
+			RULEPRINT("no-sync");
 			opts = 0;
 		}
 		if (r->rule_flag & PFRULE_SRCTRACK) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ", ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "source-track");
+				RULEPRINT(", ");
+			RULEPRINT("source-track");
 			if (r->rule_flag & PFRULE_RULESRCTRACK)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " rule");
+				RULEPRINT(" rule");
 			else
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " global");
+				RULEPRINT(" global");
 			opts = 0;
 		}
 		if (r->max_src_states) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ", ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "max-src-states %u", r->max_src_states);
+				RULEPRINT(", ");
+			RULEPRINT("max-src-states %u", r->max_src_states);
 			opts = 0;
 		}
 		if (r->max_src_conn) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ", ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "max-src-conn %u", r->max_src_conn);
+				RULEPRINT(", ");
+			RULEPRINT("max-src-conn %u", r->max_src_conn);
 			opts = 0;
 		}
 		if (r->max_src_conn_rate.limit) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ", ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring),
-			    "max-src-conn-rate %u/%u",
+				RULEPRINT(", ");
+			RULEPRINT("max-src-conn-rate %u/%u",
 			    r->max_src_conn_rate.limit,
 			    r->max_src_conn_rate.seconds);
 			opts = 0;
 		}
 		if (r->max_src_nodes) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ", ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "max-src-nodes %u", r->max_src_nodes);
+				RULEPRINT(", ");
+			RULEPRINT("max-src-nodes %u", r->max_src_nodes);
 			opts = 0;
 		}
 		if (r->overload_tblname[0]) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ", ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "overload <%s>", r->overload_tblname);
+				RULEPRINT(", ");
+			RULEPRINT("overload <%s>", r->overload_tblname);
 			if (r->flush)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " flush");
+				RULEPRINT(" flush");
 			if (r->flush & PF_FLUSH_GLOBAL)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " global");
+				RULEPRINT(" global");
 		}
 		if (r->rule_flag & PFRULE_IFBOUND) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ", ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "if-bound");
+				RULEPRINT(", ");
+			RULEPRINT("if-bound");
 			opts = 0;
 		}
 		if (r->rule_flag & PFRULE_STATESLOPPY) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ", ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "sloppy");
+				RULEPRINT(", ");
+			RULEPRINT("sloppy");
 			opts = 0;
 		}
 		if (r->rule_flag & PFRULE_PFLOW) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ", ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "pflow");
+				RULEPRINT(", ");
+			RULEPRINT("pflow");
 			opts = 0;
 		}
 		for (i = 0; i < PFTM_MAX; ++i)
@@ -486,117 +488,121 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose, char *rulest
 				int j;
 
 				if (!opts)
-					snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ", ");
+					RULEPRINT(", ");
 				opts = 0;
 				for (j = 0; pf_timeouts[j].name != NULL;
 				    ++j)
 					if (pf_timeouts[j].timeout == i)
 						break;
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring),
-				    "%s %u", pf_timeouts[j].name == NULL ?
+				RULEPRINT("%s %u",
+				    pf_timeouts[j].name == NULL ?
 				    "inv.timeout" : pf_timeouts[j].name,
 				    r->timeout[i]);
 			}
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ")");
+		RULEPRINT(")");
 	}
 
 	if (r->rule_flag & PFRULE_FRAGMENT)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " fragment");
+		RULEPRINT(" fragment");
 
 	if (r->scrub_flags >= PFSTATE_NODF || r->min_ttl || r->max_mss) {
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " scrub (");
+		RULEPRINT(" scrub (");
 		opts = 1;
 		if (r->scrub_flags & PFSTATE_NODF) {
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "no-df");
+			RULEPRINT("no-df");
 			opts = 0;
 		}
 		if (r->scrub_flags & PFSTATE_RANDOMID) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "random-id");
+				RULEPRINT(" ");
+			RULEPRINT("random-id");
 			opts = 0;
 		}
 		if (r->min_ttl) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "min-ttl %d", r->min_ttl);
+				RULEPRINT(" ");
+			RULEPRINT("min-ttl %d", r->min_ttl);
 			opts = 0;
 		}
 		if (r->scrub_flags & PFSTATE_SETTOS) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "set-tos 0x%2.2x", r->set_tos);
+				RULEPRINT(" ");
+			RULEPRINT("set-tos 0x%2.2x", r->set_tos);
 			opts = 0;
 		}
 		if (r->scrub_flags & PFSTATE_SCRUB_TCP) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "reassemble tcp");
+				RULEPRINT(" ");
+			RULEPRINT("reassemble tcp");
 			opts = 0;
 		}
 		if (r->max_mss) {
 			if (!opts)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " ");
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "max-mss %d", r->max_mss);
+				RULEPRINT(" ");
+			RULEPRINT("max-mss %d", r->max_mss);
 			opts = 0;
 		}
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ")");
+		RULEPRINT(")");
 	}
 
 	if (r->allow_opts)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " allow-opts");
+		RULEPRINT(" allow-opts");
 	if (r->label[0])
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " label \"%s\"", r->label);
+		RULEPRINT(" label \"%s\"", r->label);
 	if (r->qname[0] && r->pqname[0])
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " queue(%s, %s)", r->qname, r->pqname);
+		RULEPRINT(" queue(%s, %s)", r->qname, r->pqname);
 	else if (r->qname[0])
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " queue %s", r->qname);
+		RULEPRINT(" queue %s", r->qname);
 	if (r->tagname[0])
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " tag %s", r->tagname);
+		RULEPRINT(" tag %s", r->tagname);
 	if (r->match_tagname[0]) {
 		if (r->match_tag_not)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " !");
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " tagged %s", r->match_tagname);
+			RULEPRINT(" !");
+		RULEPRINT(" tagged %s", r->match_tagname);
 	}
 	if (r->rtableid != -1)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " rtable %u", r->rtableid);
+		RULEPRINT(" rtable %u", r->rtableid);
 	if (r->divert.port) {
 		if (PF_AZERO(&r->divert.addr, AF_INET6)) {
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " divert-reply");
+			RULEPRINT(" divert-reply");
 		} else {
 			/* XXX cut&paste from print_addr */
 			char buf[48];
 
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " divert-to ");
+			RULEPRINT(" divert-to ");
 			if (inet_ntop(r->af, &r->divert.addr, buf,
 			    sizeof(buf)) == NULL)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "?");
+				RULEPRINT("?");
 			else
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "%s", buf);
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " port %u", ntohs(r->divert.port));
+				RULEPRINT("%s", buf);
+			RULEPRINT(" port %u", ntohs(r->divert.port));
 		}
 	}
 	if (r->divert_packet.port)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " divert-packet port %u", ntohs(r->divert_packet.port));
+		RULEPRINT(" divert-packet port %u",
+		    ntohs(r->divert_packet.port));
 	if (!anchor_call[0] && r->nat.addr.type != PF_ADDR_NONE) {
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " nat-to ");
+		RULEPRINT(" nat-to ");
 		print_pool(&r->nat, r->nat.proxy_port[0],
-		    r->nat.proxy_port[1], r->af, PF_POOL_NAT, verbose, rulestring);
+		    r->nat.proxy_port[1], r->af, PF_POOL_NAT, verbose,
+		    rulestring);
 	}
 	if (!anchor_call[0] && r->rdr.addr.type != PF_ADDR_NONE) {
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " rdr-to ");
+		RULEPRINT(" rdr-to ");
 		print_pool(&r->rdr, r->rdr.proxy_port[0],
-		    r->rdr.proxy_port[1], r->af, PF_POOL_RDR, verbose, rulestring);
+		    r->rdr.proxy_port[1], r->af, PF_POOL_RDR, verbose,
+		    rulestring);
 	}
 	if (r->rt) {
 		if (r->rt == PF_ROUTETO)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " route-to");
+			RULEPRINT(" route-to");
 		else if (r->rt == PF_REPLYTO)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " reply-to");
+			RULEPRINT(" reply-to");
 		else if (r->rt == PF_DUPTO)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " dup-to");
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " ");
-		print_pool(&r->route, 0, 0, r->af, PF_POOL_ROUTE, verbose, rulestring);
+			RULEPRINT(" dup-to");
+		RULEPRINT(" ");
+		print_pool(&r->route, 0, 0, r->af, PF_POOL_ROUTE, verbose,
+		    rulestring);
 	}
 }
 
@@ -607,9 +613,9 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 	if (pool->ifname[0]) {
 		if (!PF_AZERO(&pool->addr.v.a.addr, af)) {
 			print_addr(&pool->addr, af, verbose, rulestring);
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "@");
+			RULEPRINT("@");
 		}
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "%s", pool->ifname);
+		RULEPRINT("%s", pool->ifname);
 	} else
 		print_addr(&pool->addr, af, verbose, rulestring);
 	switch (id) {
@@ -617,16 +623,16 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 		if ((p1 != PF_NAT_PROXY_PORT_LOW ||
 		    p2 != PF_NAT_PROXY_PORT_HIGH) && (p1 != 0 || p2 != 0)) {
 			if (p1 == p2)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " port %u", p1);
+				RULEPRINT(" port %u", p1);
 			else
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " port %u:%u", p1, p2);
+				RULEPRINT(" port %u:%u", p1, p2);
 		}
 		break;
 	case PF_POOL_RDR:
 		if (p1) {
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " port %u", p1);
+			RULEPRINT(" port %u", p1);
 			if (p2 && (p2 != p1))
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ":%u", p2);
+				RULEPRINT(":%u", p2);
 		}
 		break;
 	default:
@@ -636,98 +642,97 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 	case PF_POOL_NONE:
 		break;
 	case PF_POOL_BITMASK:
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " bitmask");
+		RULEPRINT(" bitmask");
 		break;
 	case PF_POOL_RANDOM:
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " random");
+		RULEPRINT(" random");
 		break;
 	case PF_POOL_SRCHASH:
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring),
-		    " source-hash 0x%08x%08x%08x%08x",
+		RULEPRINT(" source-hash 0x%08x%08x%08x%08x",
 		    pool->key.key32[0], pool->key.key32[1],
 		    pool->key.key32[2], pool->key.key32[3]);
 		break;
 	case PF_POOL_ROUNDROBIN:
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " round-robin");
+		RULEPRINT(" round-robin");
 		break;
 	}
 	if (pool->opts & PF_POOL_STICKYADDR)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " sticky-address");
+		RULEPRINT(" sticky-address");
 	if (id == PF_POOL_NAT && p1 == 0 && p2 == 0)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " static-port");
+		RULEPRINT(" static-port");
 }
 
 void
-print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose, char *rulestring)
+print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose,
+    char *rulestring)
 {
 	switch (addr->type) {
 	case PF_ADDR_DYNIFTL:
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "(%s", addr->v.ifname);
+		RULEPRINT("(%s", addr->v.ifname);
 		if (addr->iflags & PFI_AFLAG_NETWORK)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ":network");
+			RULEPRINT(":network");
 		if (addr->iflags & PFI_AFLAG_BROADCAST)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ":broadcast");
+			RULEPRINT(":broadcast");
 		if (addr->iflags & PFI_AFLAG_PEER)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ":peer");
+			RULEPRINT(":peer");
 		if (addr->iflags & PFI_AFLAG_NOALIAS)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ":0");
+			RULEPRINT(":0");
 		if (verbose) {
 			if (addr->p.dyncnt <= 0)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ":*");
+				RULEPRINT(":*");
 			else
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ":%d", addr->p.dyncnt);
+				RULEPRINT(":%d", addr->p.dyncnt);
 		}
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), ")");
+		RULEPRINT(")");
 		break;
 	case PF_ADDR_TABLE:
 		if (verbose)
 			if (addr->p.tblcnt == -1)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "<%s:*>", addr->v.tblname);
+				RULEPRINT("<%s:*>", addr->v.tblname);
 			else
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring),
-				    "<%s:%d>", addr->v.tblname,
+				RULEPRINT("<%s:%d>", addr->v.tblname,
 				    addr->p.tblcnt);
 		else
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "<%s>", addr->v.tblname);
+			RULEPRINT("<%s>", addr->v.tblname);
 		return;
 	case PF_ADDR_RANGE: {
 		char buf[48];
 
 		if (inet_ntop(af, &addr->v.a.addr, buf, sizeof(buf)) == NULL)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "?");
+			RULEPRINT("?");
 		else
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "%s", buf);
+			RULEPRINT("%s", buf);
 		if (inet_ntop(af, &addr->v.a.mask, buf, sizeof(buf)) == NULL)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " - ?");
+			RULEPRINT(" - ?");
 		else
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " - %s", buf);
+			RULEPRINT(" - %s", buf);
 		break;
 	}
 	case PF_ADDR_ADDRMASK:
 		if (PF_AZERO(&addr->v.a.addr, AF_INET6) &&
 		    PF_AZERO(&addr->v.a.mask, AF_INET6))
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "any");
+			RULEPRINT("any");
 		else {
 			char buf[48];
 
 			if (inet_ntop(af, &addr->v.a.addr, buf,
 			    sizeof(buf)) == NULL)
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "?");
+				RULEPRINT("?");
 			else
-				snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "%s", buf);
+				RULEPRINT("%s", buf);
 		}
 		break;
 	case PF_ADDR_NOROUTE:
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "no-route");
+		RULEPRINT("no-route");
 		return;
 	case PF_ADDR_URPFFAILED:
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "urpf-failed");
+		RULEPRINT("urpf-failed");
 		return;
 	case PF_ADDR_RTLABEL:
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "route \"%s\"", addr->v.rtlabelname);
+		RULEPRINT("route \"%s\"", addr->v.rtlabelname);
 		return;
 	default:
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "?");
+		RULEPRINT("?");
 		return;
 	}
 
@@ -738,7 +743,7 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose, char *rulestr
 		int bits = unmask(&addr->v.a.mask, af);
 
 		if (bits < (af == AF_INET ? 32 : 128))
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "/%d", bits);
+			RULEPRINT("/%d", bits);
 	}
 }
 
@@ -774,11 +779,11 @@ print_fromto(struct pf_rule_addr *src, pf_osfp_t osfp, struct pf_rule_addr *dst,
 	    !src->neg && !dst->neg &&
 	    !src->port_op && !dst->port_op &&
 	    osfp == PF_OSFP_ANY)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " all");
+		RULEPRINT(" all");
 	else {
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " from ");
+		RULEPRINT(" from ");
 		if (src->neg)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "! ");
+			RULEPRINT("! ");
 		print_addr(&src->addr, af, verbose, rulestring);
 		if (src->port_op)
 			print_port(src->port_op, src->port[0],
@@ -786,13 +791,12 @@ print_fromto(struct pf_rule_addr *src, pf_osfp_t osfp, struct pf_rule_addr *dst,
 			    proto == IPPROTO_TCP ? "tcp" : "udp",
 			    rulestring);
 		if (osfp != PF_OSFP_ANY)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring),
-			    " os \"%s\"", pfctl_lookup_fingerprint(osfp, buf,
-			    sizeof(buf)));
+			RULEPRINT(" os \"%s\"",
+			    pfctl_lookup_fingerprint(osfp, buf, sizeof(buf)));
 
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " to ");
+		RULEPRINT(" to ");
 		if (dst->neg)
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "! ");
+			RULEPRINT("! ");
 		print_addr(&dst->addr, af, verbose, rulestring);
 		if (dst->port_op)
 			print_port(dst->port_op, dst->port[0],
@@ -803,7 +807,8 @@ print_fromto(struct pf_rule_addr *src, pf_osfp_t osfp, struct pf_rule_addr *dst,
 }
 
 void
-print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, const char *proto, char *rulestring)
+print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, const char *proto,
+    char *rulestring)
 {
 	char		 a1[6], a2[6];
 	struct servent	*s;
@@ -813,7 +818,7 @@ print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, const char *proto, char *rul
 	p2 = ntohs(p2);
 	snprintf(a1, sizeof(a1), "%u", p1);
 	snprintf(a2, sizeof(a2), "%u", p2);
-	snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " port");
+	RULEPRINT(" port");
 	if (s != NULL && (op == PF_OP_EQ || op == PF_OP_NE))
 		print_op(op, s->s_name, a2, rulestring);
 	else
@@ -824,23 +829,23 @@ void
 print_op(u_int8_t op, const char *a1, const char *a2, char *rulestring)
 {
 	if (op == PF_OP_IRG)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " %s >< %s", a1, a2);
+		RULEPRINT(" %s >< %s", a1, a2);
 	else if (op == PF_OP_XRG)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " %s <> %s", a1, a2);
+		RULEPRINT(" %s <> %s", a1, a2);
 	else if (op == PF_OP_EQ)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " = %s", a1);
+		RULEPRINT(" = %s", a1);
 	else if (op == PF_OP_NE)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " != %s", a1);
+		RULEPRINT(" != %s", a1);
 	else if (op == PF_OP_LT)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " < %s", a1);
+		RULEPRINT(" < %s", a1);
 	else if (op == PF_OP_LE)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " <= %s", a1);
+		RULEPRINT(" <= %s", a1);
 	else if (op == PF_OP_GT)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " > %s", a1);
+		RULEPRINT(" > %s", a1);
 	else if (op == PF_OP_GE)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " >= %s", a1);
+		RULEPRINT(" >= %s", a1);
 	else if (op == PF_OP_RRG)
-		snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " %s:%s", a1, a2);
+		RULEPRINT(" %s:%s", a1, a2);
 }
 
 void
@@ -850,17 +855,18 @@ print_flags(u_int8_t f, char *rulestring)
 
 	for (i = 0; tcpflags[i]; ++i)
 		if (f & (1 << i))
-			snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), "%c", tcpflags[i]);
+			RULEPRINT("%c", tcpflags[i]);
 }
 
 void
-print_ugid(u_int8_t op, unsigned u1, unsigned u2, const char *t, unsigned umax, char *rulestring)
+print_ugid(u_int8_t op, unsigned u1, unsigned u2, const char *t, unsigned umax,
+    char *rulestring)
 {
 	char	a1[11], a2[11];
 
 	snprintf(a1, sizeof(a1), "%u", u1);
 	snprintf(a2, sizeof(a2), "%u", u2);
-	snprintf(rulestring + strlen(rulestring), 256 - strlen(rulestring), " %s", t);
+	RULEPRINT(" %s", t);
 	if (u1 == umax && (op == PF_OP_EQ || op == PF_OP_NE))
 		print_op(op, "unknown", a2, rulestring);
 	else
