@@ -55,4 +55,3 @@ about each rule of your ruleset.
 	1.) The limit of DATA_MAX_NAME_LEN might cause problems
 	    if rules just differ in the last chars after the
 	    64th char.
-	2.) ioctl sometimes fails on SD-Cards
