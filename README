@@ -7,7 +7,8 @@ about each rule of your ruleset.
 
 = Supported OpenBSD Versions
 	- OpenBSD 4.5
-	- OpenBSD 4.9/Current
+	- OpenBSD 4.9
+	- OpenBSD 5.0/Current
 
 = Installation
 	1.) install collectd and make sources available
